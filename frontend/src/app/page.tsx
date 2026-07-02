@@ -1,5 +1,15 @@
 "use client";
 
+import {
+  AlertCircle,
+  ArrowRight,
+  Download,
+  Inbox,
+  Loader2,
+  RotateCcw,
+  SearchX,
+  Trophy,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { JobDescriptionForm } from "@/components/screening/JobDescriptionForm";
 import { CandidateDetailModal } from "@/components/screening/CandidateDetailModal";
@@ -99,7 +109,11 @@ export default function Home() {
           <ResumeDropzone files={files} onChange={setFiles} />
 
           {submitError && (
-            <p role="alert" className="text-sm text-red-600">
+            <p
+              role="alert"
+              className="flex animate-fade-in items-start gap-2 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm text-red-700"
+            >
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
               {submitError}
             </p>
           )}
@@ -108,9 +122,22 @@ export default function Home() {
             type="button"
             disabled={!canSubmit}
             onClick={handleSubmit}
-            className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-3 text-sm font-semibold text-white shadow-card transition-all duration-200 hover:shadow-card-hover hover:brightness-105 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
           >
-            {isSubmitting ? "Submitting..." : "Start screening"}
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
+                Submitting...
+              </>
+            ) : (
+              <>
+                Start screening
+                <ArrowRight
+                  className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                  strokeWidth={2.5}
+                />
+              </>
+            )}
           </button>
         </section>
       )}
@@ -123,7 +150,11 @@ export default function Home() {
             timedOut={poll.timedOut}
           />
           {poll.error && (
-            <p role="alert" className="text-center text-sm text-amber-600">
+            <p
+              role="alert"
+              className="mx-auto flex max-w-md animate-fade-in items-start gap-2 rounded-lg bg-amber-50 px-3.5 py-2.5 text-center text-sm text-amber-700"
+            >
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
               {poll.error} Retrying automatically...
             </p>
           )}
@@ -131,7 +162,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setState("results")}
-              className="mx-auto block rounded text-sm font-medium text-brand-600 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+              className="mx-auto block rounded text-sm font-medium text-brand-600 transition-colors hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
             >
               View partial results ({poll.processedCount} ready)
             </button>
@@ -140,32 +171,41 @@ export default function Home() {
       )}
 
       {state === "results" && (
-        <section aria-label="Ranked candidates">
+        <section aria-label="Ranked candidates" className="animate-fade-in-up">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="text-xl font-semibold text-slate-900">
+            <h2 className="flex items-center gap-2 text-xl font-semibold text-slate-900">
+              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-500">
+                <Trophy className="h-4 w-4" strokeWidth={2.25} />
+              </span>
               {job.jobTitle ? `Results for ${job.jobTitle}` : "Results"}
             </h2>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               {filteredCandidates.length > 0 && (
                 <button
                   type="button"
                   onClick={handleExportCsv}
-                  className="rounded text-sm font-medium text-slate-600 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-600 shadow-sm transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                 >
+                  <Download className="h-3.5 w-3.5" strokeWidth={2.25} />
                   Export CSV
                 </button>
               )}
               <button
                 type="button"
                 onClick={handleReset}
-                className="rounded text-sm font-medium text-brand-600 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-brand-50 px-3 py-1.5 text-sm font-medium text-brand-700 transition-colors hover:bg-brand-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
               >
-                Start new screening
+                <RotateCcw className="h-3.5 w-3.5" strokeWidth={2.25} />
+                New screening
               </button>
             </div>
           </div>
           {poll.error && (
-            <p role="alert" className="mb-4 text-sm text-amber-600">
+            <p
+              role="alert"
+              className="mb-4 flex animate-fade-in items-start gap-2 rounded-lg bg-amber-50 px-3.5 py-2.5 text-sm text-amber-700"
+            >
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
               {poll.error}
             </p>
           )}
@@ -182,16 +222,20 @@ export default function Home() {
               {filteredCandidates.length > 0 ? (
                 <RankedCandidateTable candidates={filteredCandidates} onSelect={setSelectedCandidate} />
               ) : (
-                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-500">
-                  No candidates match your search or filter.
+                <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center animate-fade-in">
+                  <SearchX className="h-8 w-8 text-slate-300" strokeWidth={1.5} />
+                  <p className="text-sm text-slate-500">No candidates match your search or filter.</p>
                 </div>
               )}
             </>
           ) : (
-            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-500">
-              {poll.timedOut
-                ? "No candidates finished processing. Check the Errors sheet — resumes may have failed extraction or scoring."
-                : "No candidates processed yet."}
+            <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
+              <Inbox className="h-8 w-8 text-slate-300" strokeWidth={1.5} />
+              <p className="text-sm text-slate-500">
+                {poll.timedOut
+                  ? "No candidates finished processing. Check the Errors sheet — resumes may have failed extraction or scoring."
+                  : "No candidates processed yet."}
+              </p>
             </div>
           )}
 
