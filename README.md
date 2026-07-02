@@ -21,7 +21,14 @@ Manual test plan: [`docs/TESTING_CHECKLIST.md`](docs/TESTING_CHECKLIST.md)
 
 ## Status
 
-🚧 Actively being built — see commit history for progress. Not yet deployed.
+✅ Code complete — n8n workflows, frontend, docs, and validation all done. Not yet deployed pending real n8n/OpenAI/Google credentials (see [`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md)).
+
+## Deployment
+
+- **Frontend:** deploy `frontend/` to Vercel with **Root Directory** set to `frontend`. Build settings are pinned in [`frontend/vercel.json`](frontend/vercel.json). Requires `NEXT_PUBLIC_N8N_SUBMIT_WEBHOOK_URL` and `NEXT_PUBLIC_N8N_RESULTS_WEBHOOK_URL` set as environment variables.
+- **Automation:** import both files in `workflow/` into n8n Cloud, wire up OpenAI + Google Sheets credentials, activate both workflows.
+
+Full walkthrough: [`docs/SETUP_GUIDE.md`](docs/SETUP_GUIDE.md).
 
 ## Tech stack
 
