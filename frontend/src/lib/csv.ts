@@ -18,12 +18,14 @@ const COLUMNS: { key: keyof Candidate; header: string }[] = [
 ];
 
 // Excel/Sheets treats a leading =, +, -, or @ as the start of a formula (phone
-// numbers like "+1-555-..." trigger this). A leading apostrophe forces those
-// apps to read the cell as plain text without showing the apostrophe itself.
+// numbers like "+1-555-..." trigger this). A leading apostrophe only forces
+// plain-text mode when a file is opened directly — it's not honored on every
+// paste/import path. Wrapping in ="..." is real formula syntax that evaluates
+// to the literal text everywhere, so it works regardless of how the CSV is opened.
 function escapeCsvValue(value: unknown): string {
   let str = value === undefined || value === null ? "" : String(value);
   if (/^[=+\-@]/.test(str)) {
-    str = `'${str}`;
+    str = `="${str.replace(/"/g, '""')}"`;
   }
   if (/[",\n]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
