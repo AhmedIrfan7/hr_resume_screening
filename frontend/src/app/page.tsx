@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { JobDescriptionForm } from "@/components/screening/JobDescriptionForm";
+import { ResumeDropzone } from "@/components/screening/ResumeDropzone";
 import type { Candidate, JobDetails } from "@/lib/types";
 
 type ScreeningState = "idle" | "processing" | "results";
@@ -23,11 +24,13 @@ const EMPTY_JOB: JobDetails = {
 export default function Home() {
   const [state, setState] = useState<ScreeningState>("idle");
   const [job, setJob] = useState<JobDetails>(EMPTY_JOB);
+  const [files, setFiles] = useState<File[]>([]);
   const [batch, setBatch] = useState<BatchState | null>(null);
 
   function handleReset() {
     setState("idle");
     setJob(EMPTY_JOB);
+    setFiles([]);
     setBatch(null);
   }
 
@@ -36,7 +39,7 @@ export default function Home() {
       {state === "idle" && (
         <section aria-label="Job details and resume upload" className="space-y-6">
           <JobDescriptionForm value={job} onChange={setJob} />
-          <p className="text-slate-500">Resume upload goes here.</p>
+          <ResumeDropzone files={files} onChange={setFiles} />
         </section>
       )}
 
