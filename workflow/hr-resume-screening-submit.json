@@ -40,7 +40,7 @@
               "id": "cond-valid",
               "leftValue": "={{ $json.isValid }}",
               "rightValue": "",
-              "operator": { "type": "boolean", "operation": "true" }
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
             }
           ],
           "combinator": "and"
