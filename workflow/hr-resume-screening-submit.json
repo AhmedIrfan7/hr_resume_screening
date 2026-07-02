@@ -183,6 +183,17 @@
           "systemPromptTemplate": "You are a senior hiring manager scoring a candidate against a specific job. Be objective, evidence-based, and consistent. Base every score strictly on the candidate profile and job details provided — do not assume information that isn't there."
         }
       }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000014",
+      "name": "Assemble Candidate Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1980, -60],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const meta = $('Split Resume Files').item.json;\nconst profile = $('Extract Candidate Profile').item.json.output || $('Extract Candidate Profile').item.json;\nconst score = $json.output || $json;\n\nreturn {\n  json: {\n    batchId: meta.batchId,\n    fileName: meta.fileName,\n    candidateName: profile.candidateName || '',\n    email: profile.email || '',\n    phone: profile.phone || '',\n    yearsExperience: profile.yearsExperience || '',\n    skills: Array.isArray(profile.skills) ? profile.skills.join(', ') : (profile.skills || ''),\n    education: profile.education || '',\n    certifications: Array.isArray(profile.certifications) ? profile.certifications.join(', ') : (profile.certifications || ''),\n    summary: profile.summary || '',\n    score: score.score || 0,\n    classification: score.classification || '',\n    skillMatchScore: score.skillMatchScore || 0,\n    experienceScore: score.experienceScore || 0,\n    achievementScore: score.achievementScore || 0,\n    educationScore: score.educationScore || 0,\n    clarityScore: score.clarityScore || 0,\n    strengths: Array.isArray(score.strengths) ? score.strengths.join('; ') : (score.strengths || ''),\n    gaps: Array.isArray(score.gaps) ? score.gaps.join('; ') : (score.gaps || ''),\n    recommendation: score.recommendation || '',\n    processedAt: new Date().toISOString()\n  }\n};"
+      }
     }
   ],
   "connections": {
@@ -238,6 +249,11 @@
     "Prepare Scoring Input": {
       "main": [
         [{ "node": "Score Candidate", "type": "main", "index": 0 }]
+      ]
+    },
+    "Score Candidate": {
+      "main": [
+        [{ "node": "Assemble Candidate Row", "type": "main", "index": 0 }]
       ]
     }
   },
