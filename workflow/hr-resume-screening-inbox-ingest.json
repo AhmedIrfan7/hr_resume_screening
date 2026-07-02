@@ -1,0 +1,71 @@
+{
+  "name": "HR Resume Screening — Inbox Ingest",
+  "nodes": [
+    {
+      "id": "d3000001-0000-0000-0000-000000000001",
+      "name": "Gmail Trigger",
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.2,
+      "position": [0, 0],
+      "parameters": {
+        "pollTimes": { "item": [{ "mode": "everyMinute" }] },
+        "simple": false,
+        "filters": { "q": "has:attachment filename:pdf" },
+        "downloadAttachments": true,
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": { "id": "REPLACE_WITH_YOUR_GMAIL_CRED_ID", "name": "Gmail account" }
+      }
+    },
+    {
+      "id": "d3000001-0000-0000-0000-000000000002",
+      "name": "Filter PDF Attachments",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const items = $input.all();\nconst results = [];\n\nfunction getHeaderValue(headers, name) {\n  if (!Array.isArray(headers)) return '';\n  const match = headers.find((h) => (h.name || '').toLowerCase() === name.toLowerCase());\n  return match ? (match.value || '') : '';\n}\n\nfunction parseSender(raw) {\n  const m = raw.match(/^(.*?)<(.+?)>$/);\n  if (m) {\n    return { name: m[1].trim().replace(/^\"|\"$/g, ''), email: m[2].trim() };\n  }\n  return { name: '', email: raw.trim() };\n}\n\nfor (const item of items) {\n  const data = item.json || {};\n  const headers = data.payload && data.payload.headers;\n\n  const fromRaw = data.From || data.from || getHeaderValue(headers, 'From') || '';\n  const subject = data.Subject || data.subject || getHeaderValue(headers, 'Subject') || '(no subject)';\n  const dateRaw = data.Date || data.date || getHeaderValue(headers, 'Date') || '';\n  const { name: senderName, email: senderEmail } = parseSender(fromRaw);\n\n  let receivedAt;\n  if (dateRaw) {\n    const parsed = new Date(dateRaw);\n    receivedAt = isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();\n  } else if (data.internalDate) {\n    receivedAt = new Date(Number(data.internalDate)).toISOString();\n  } else {\n    receivedAt = new Date().toISOString();\n  }\n\n  const binary = item.binary || {};\n  const attachmentKeys = Object.keys(binary).filter((k) => k.toLowerCase().startsWith('attachment'));\n\n  for (const key of attachmentKeys) {\n    const bin = binary[key];\n    const mime = (bin.mimeType || '').toLowerCase();\n    if (mime !== 'application/pdf') continue;\n\n    results.push({\n      json: {\n        fileName: bin.fileName || 'resume.pdf',\n        senderEmail,\n        senderName,\n        subject,\n        receivedAt\n      },\n      binary: { data: bin }\n    });\n  }\n}\n\nreturn results;"
+      }
+    },
+    {
+      "id": "d3000001-0000-0000-0000-000000000099",
+      "name": "Sticky Note - Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-20, -260],
+      "parameters": {
+        "content": "## RESUMEIQ — INBOX INGEST WORKFLOW\n\nPolls HR's Gmail inbox for new emails with PDF attachments, uploads each PDF to Google Drive, and logs it to the `InboxResumes` sheet tab so it shows up as a selectable resume in the ResumeIQ frontend.\n\n**SETUP CHECKLIST (step 2 of 3 — Drive upload + Sheets logging added next)**\n1. Set up a Gmail OAuth2 credential, replace `REPLACE_WITH_YOUR_GMAIL_CRED_ID`\n2. Non-PDF attachments and non-matching emails are silently skipped, not errors",
+        "height": 220,
+        "width": 480,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Gmail Trigger": {
+      "main": [
+        [{ "node": "Filter PDF Attachments", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "versionId": "hr-resume-screening-inbox-ingest-v1",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "resumeiq-hr-resume-screening"
+  },
+  "tags": [
+    {
+      "name": "resumeiq",
+      "createdAt": "2026-07-02T00:00:00.000Z",
+      "updatedAt": "2026-07-02T00:00:00.000Z"
+    }
+  ]
+}
