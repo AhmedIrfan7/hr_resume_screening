@@ -1,19 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { JobDescriptionForm } from "@/components/screening/JobDescriptionForm";
 import { ProcessingView } from "@/components/screening/ProcessingView";
 import { ResumeDropzone } from "@/components/screening/ResumeDropzone";
+import { usePollResults } from "@/hooks/usePollResults";
 import { generateBatchId, submitBatch } from "@/lib/api";
-import type { Candidate, JobDetails } from "@/lib/types";
+import type { JobDetails } from "@/lib/types";
 
 type ScreeningState = "idle" | "processing" | "results";
 
 interface BatchState {
   batchId: string;
   totalFiles: number;
-  processedCount: number;
-  candidates: Candidate[];
 }
 
 const EMPTY_JOB: JobDetails = {
@@ -33,6 +32,14 @@ export default function Home() {
 
   const canSubmit = job.jobDescription.trim().length > 0 && files.length > 0 && !isSubmitting;
 
+  const poll = usePollResults(batch?.batchId ?? null, batch?.totalFiles ?? 0, state === "processing");
+
+  useEffect(() => {
+    if (state === "processing" && poll.isComplete) {
+      setState("results");
+    }
+  }, [state, poll.isComplete]);
+
   function handleReset() {
     setState("idle");
     setJob(EMPTY_JOB);
@@ -48,12 +55,7 @@ export default function Home() {
     try {
       const batchId = generateBatchId();
       const response = await submitBatch(batchId, job, files);
-      setBatch({
-        batchId: response.batchId,
-        totalFiles: response.totalFiles,
-        processedCount: 0,
-        candidates: [],
-      });
+      setBatch({ batchId: response.batchId, totalFiles: response.totalFiles });
       setState("processing");
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -87,12 +89,21 @@ export default function Home() {
       )}
 
       {state === "processing" && batch && (
-        <section aria-label="Screening in progress">
+        <section aria-label="Screening in progress" className="space-y-4">
           <ProcessingView
-            processedCount={batch.processedCount}
+            processedCount={poll.processedCount}
             totalFiles={batch.totalFiles}
-            timedOut={false}
+            timedOut={poll.timedOut}
           />
+          {poll.timedOut && (
+            <button
+              type="button"
+              onClick={() => setState("results")}
+              className="mx-auto block text-sm font-medium text-brand-600 hover:text-brand-700"
+            >
+              View partial results ({poll.processedCount} ready)
+            </button>
+          )}
         </section>
       )}
 
