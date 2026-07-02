@@ -20,10 +20,13 @@
         },
         "simple": false,
         "filters": {
-          "q": "has:attachment filename:pdf"
+          "q": "has:attachment filename:pdf",
+          "readStatus": "both"
         },
-        "downloadAttachments": true,
-        "options": {}
+        "options": {
+          "downloadAttachments": true,
+          "dataPropertyAttachmentsPrefixName": "attachment_"
+        }
       },
       "credentials": {
         "gmailOAuth2": {
