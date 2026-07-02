@@ -6,16 +6,30 @@
       "name": "Gmail Trigger",
       "type": "n8n-nodes-base.gmailTrigger",
       "typeVersion": 1.2,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "parameters": {
-        "pollTimes": { "item": [{ "mode": "everyMinute" }] },
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
         "simple": false,
-        "filters": { "q": "has:attachment filename:pdf" },
+        "filters": {
+          "q": "has:attachment filename:pdf"
+        },
         "downloadAttachments": true,
         "options": {}
       },
       "credentials": {
-        "gmailOAuth2": { "id": "REPLACE_WITH_YOUR_GMAIL_CRED_ID", "name": "Gmail account" }
+        "gmailOAuth2": {
+          "id": "REPLACE_WITH_YOUR_GMAIL_CRED_ID",
+          "name": "Gmail account"
+        }
       }
     },
     {
@@ -23,10 +37,13 @@
       "name": "Filter PDF Attachments",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [220, 0],
+      "position": [
+        220,
+        0
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
-        "jsCode": "const items = $input.all();\nconst results = [];\n\nfunction getHeaderValue(headers, name) {\n  if (!Array.isArray(headers)) return '';\n  const match = headers.find((h) => (h.name || '').toLowerCase() === name.toLowerCase());\n  return match ? (match.value || '') : '';\n}\n\nfunction parseSender(raw) {\n  const m = raw.match(/^(.*?)<(.+?)>$/);\n  if (m) {\n    return { name: m[1].trim().replace(/^\"|\"$/g, ''), email: m[2].trim() };\n  }\n  return { name: '', email: raw.trim() };\n}\n\nfunction isPdfAttachment(bin) {\n  const mime = (bin.mimeType || '').toLowerCase();\n  const name = (bin.fileName || '').toLowerCase();\n  return mime === 'application/pdf' || name.endsWith('.pdf');\n}\n\nfor (const item of items) {\n  const data = item.json || {};\n  const headers = data.payload && data.payload.headers;\n\n  const fromRaw = data.From || data.from || getHeaderValue(headers, 'From') || '';\n  const subject = data.Subject || data.subject || getHeaderValue(headers, 'Subject') || '(no subject)';\n  const dateRaw = data.Date || data.date || getHeaderValue(headers, 'Date') || '';\n  const { name: senderName, email: senderEmail } = parseSender(fromRaw);\n\n  let receivedAt;\n  if (dateRaw) {\n    const parsed = new Date(dateRaw);\n    receivedAt = isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();\n  } else if (data.internalDate) {\n    receivedAt = new Date(Number(data.internalDate)).toISOString();\n  } else {\n    receivedAt = new Date().toISOString();\n  }\n\n  // Don't assume a specific binary key naming convention (e.g. \"attachment_0\")\n  // — scan every binary key on the item and identify PDFs by MIME type or\n  // filename instead. Gmail Trigger items only carry actual email attachments\n  // in `binary`, so there's nothing else these keys could be.\n  const binary = item.binary || {};\n\n  for (const key of Object.keys(binary)) {\n    const bin = binary[key];\n    if (!isPdfAttachment(bin)) continue;\n\n    results.push({\n      json: {\n        fileName: bin.fileName || 'resume.pdf',\n        senderEmail,\n        senderName,\n        subject,\n        receivedAt\n      },\n      binary: { data: bin }\n    });\n  }\n}\n\nreturn results;"
+        "jsCode": "const items = $input.all();\nconst results = [];\n\nfunction getHeaderValue(headers, name) {\n  if (!Array.isArray(headers)) return '';\n  const match = headers.find((h) => (h.name || '').toLowerCase() === name.toLowerCase());\n  return match ? (match.value || '') : '';\n}\n\n// Some n8n Gmail node versions parse From/Subject/Date into objects\n// (e.g. { text, html, value: [{ name, address }] }) instead of plain\n// strings — normalize whatever shape shows up into a plain string.\nfunction toText(value) {\n  if (typeof value === 'string') return value;\n  if (value && typeof value === 'object') {\n    if (typeof value.text === 'string') return value.text;\n    if (Array.isArray(value.value) && value.value[0]) {\n      const v = value.value[0];\n      return ((v.name ? v.name + ' ' : '') + (v.address ? '<' + v.address + '>' : '')).trim();\n    }\n  }\n  return '';\n}\n\nfunction parseSender(rawValue) {\n  const raw = (typeof rawValue === 'string' ? rawValue : String(rawValue || '')).trim();\n  const m = raw.match(/^(.*?)<(.+?)>$/);\n  if (m) {\n    return { name: m[1].trim().replace(/^\"|\"$/g, ''), email: m[2].trim() };\n  }\n  return { name: '', email: raw };\n}\n\nfunction isPdfAttachment(bin) {\n  const mime = (bin.mimeType || '').toLowerCase();\n  const name = (bin.fileName || '').toLowerCase();\n  return mime === 'application/pdf' || name.endsWith('.pdf');\n}\n\nfor (const item of items) {\n  const data = item.json || {};\n  const headers = data.payload && data.payload.headers;\n\n  const fromRaw = toText(data.From) || toText(data.from) || getHeaderValue(headers, 'From') || '';\n  const subject = toText(data.Subject) || toText(data.subject) || getHeaderValue(headers, 'Subject') || '(no subject)';\n  const dateRaw = toText(data.Date) || toText(data.date) || getHeaderValue(headers, 'Date') || '';\n  const { name: senderName, email: senderEmail } = parseSender(fromRaw);\n\n  let receivedAt;\n  if (dateRaw) {\n    const parsed = new Date(dateRaw);\n    receivedAt = isNaN(parsed.getTime()) ? new Date().toISOString() : parsed.toISOString();\n  } else if (data.internalDate) {\n    receivedAt = new Date(Number(data.internalDate)).toISOString();\n  } else {\n    receivedAt = new Date().toISOString();\n  }\n\n  // Don't assume a specific binary key naming convention (e.g. \"attachment_0\")\n  // — scan every binary key on the item and identify PDFs by MIME type or\n  // filename instead. Gmail Trigger items only carry actual email attachments\n  // in `binary`, so there's nothing else these keys could be.\n  const binary = item.binary || {};\n\n  for (const key of Object.keys(binary)) {\n    const bin = binary[key];\n    if (!isPdfAttachment(bin)) continue;\n\n    results.push({\n      json: {\n        fileName: bin.fileName || 'resume.pdf',\n        senderEmail,\n        senderName,\n        subject,\n        receivedAt\n      },\n      binary: { data: bin }\n    });\n  }\n}\n\nreturn results;"
       }
     },
     {
@@ -34,7 +51,10 @@
       "name": "Upload to Drive",
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
-      "position": [440, 0],
+      "position": [
+        440,
+        0
+      ],
       "onError": "continueRegularOutput",
       "parameters": {
         "operation": "upload",
@@ -48,7 +68,10 @@
         "options": {}
       },
       "credentials": {
-        "googleDriveOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Drive account" }
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID",
+          "name": "Google Drive account"
+        }
       }
     },
     {
@@ -56,7 +79,10 @@
       "name": "Prepare Inbox Row",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [660, 0],
+      "position": [
+        660,
+        0
+      ],
       "parameters": {
         "mode": "runOnceForEachItem",
         "jsCode": "const source = $('Filter PDF Attachments').item.json;\nconst uploaded = $json;\n\nreturn {\n  json: {\n    id: uploaded.id,\n    fileName: source.fileName,\n    senderEmail: source.senderEmail,\n    senderName: source.senderName,\n    subject: source.subject,\n    receivedAt: source.receivedAt,\n    driveFileId: uploaded.id\n  }\n};"
@@ -67,12 +93,23 @@
       "name": "Save Inbox Resume to Sheet",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
-      "position": [880, 0],
+      "position": [
+        880,
+        0
+      ],
       "onError": "continueRegularOutput",
       "parameters": {
         "operation": "append",
-        "documentId": { "__rl": true, "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID", "mode": "id" },
-        "sheetName": { "__rl": true, "value": "InboxResumes", "mode": "name" },
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "InboxResumes",
+          "mode": "name"
+        },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
@@ -85,10 +122,15 @@
             "driveFileId": "={{ $json.driveFileId }}"
           }
         },
-        "options": { "cellFormat": "RAW" }
+        "options": {
+          "cellFormat": "RAW"
+        }
       },
       "credentials": {
-        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Sheets account" }
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
@@ -96,7 +138,10 @@
       "name": "Sticky Note - Overview",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [-20, -300],
+      "position": [
+        -20,
+        -300
+      ],
       "parameters": {
         "content": "## RESUMEIQ — INBOX INGEST WORKFLOW\n\nPolls HR's Gmail inbox for new emails with PDF attachments, uploads each PDF to Google Drive, and logs it to the `InboxResumes` sheet tab so it shows up as a selectable resume in the ResumeIQ frontend.\n\n**SETUP CHECKLIST**\n1. Set up a Gmail OAuth2 credential, replace `REPLACE_WITH_YOUR_GMAIL_CRED_ID`\n2. Create (or reuse) a Google Drive folder to store inbox resumes in, replace `REPLACE_WITH_YOUR_INBOX_DRIVE_FOLDER_ID`\n3. Replace `REPLACE_WITH_YOUR_GOOGLE_SHEET_ID` and the Google Drive/Sheets credential placeholders\n4. Make sure the `InboxResumes` tab exists with the right headers (see docs/SETUP_GUIDE.md)\n5. Activate this workflow — non-PDF attachments and non-matching emails are silently skipped, not errors",
         "height": 260,
@@ -109,7 +154,10 @@
       "name": "Sticky Note - Storage",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [420, 160],
+      "position": [
+        420,
+        160
+      ],
       "parameters": {
         "content": "## PDF → DRIVE → SHEET\n\nThe PDF binary is uploaded to Drive so the Submit workflow can download it later, on-demand, when HR actually selects this resume for a screening — the raw file isn't kept anywhere else. The sheet row is just a lightweight pointer (metadata + Drive file ID) that powers the selectable list in the frontend.",
         "height": 160,
@@ -121,22 +169,46 @@
   "connections": {
     "Gmail Trigger": {
       "main": [
-        [{ "node": "Filter PDF Attachments", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Filter PDF Attachments",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Filter PDF Attachments": {
       "main": [
-        [{ "node": "Upload to Drive", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Upload to Drive",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Upload to Drive": {
       "main": [
-        [{ "node": "Prepare Inbox Row", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Prepare Inbox Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Prepare Inbox Row": {
       "main": [
-        [{ "node": "Save Inbox Resume to Sheet", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Save Inbox Resume to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
