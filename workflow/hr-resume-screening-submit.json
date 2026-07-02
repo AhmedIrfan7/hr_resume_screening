@@ -1,6 +1,21 @@
 {
   "name": "HR Resume Screening — Submit",
-  "nodes": [],
+  "nodes": [
+    {
+      "id": "b1000001-0000-0000-0000-000000000001",
+      "name": "Submit Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "hr-screening-submit",
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hr-screening/submit",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    }
+  ],
   "connections": {},
   "pinData": {},
   "active": false,
