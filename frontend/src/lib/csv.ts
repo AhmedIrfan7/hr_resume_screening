@@ -17,8 +17,14 @@ const COLUMNS: { key: keyof Candidate; header: string }[] = [
   { key: "fileName", header: "Resume File" },
 ];
 
+// Excel/Sheets treats a leading =, +, -, or @ as the start of a formula (phone
+// numbers like "+1-555-..." trigger this). A leading apostrophe forces those
+// apps to read the cell as plain text without showing the apostrophe itself.
 function escapeCsvValue(value: unknown): string {
-  const str = value === undefined || value === null ? "" : String(value);
+  let str = value === undefined || value === null ? "" : String(value);
+  if (/^[=+\-@]/.test(str)) {
+    str = `'${str}`;
+  }
   if (/[",\n]/.test(str)) {
     return `"${str.replace(/"/g, '""')}"`;
   }
