@@ -9,6 +9,7 @@ import { RankedCandidateTable } from "@/components/screening/RankedCandidateTabl
 import { ResumeDropzone } from "@/components/screening/ResumeDropzone";
 import { usePollResults } from "@/hooks/usePollResults";
 import { generateBatchId, submitBatch } from "@/lib/api";
+import { candidatesToCsv, downloadCsv } from "@/lib/csv";
 import type { Candidate, JobDetails } from "@/lib/types";
 
 type ScreeningState = "idle" | "processing" | "results";
@@ -66,6 +67,12 @@ export default function Home() {
     setBatch(null);
     setSubmitError(null);
     setSelectedCandidate(null);
+  }
+
+  function handleExportCsv() {
+    const csv = candidatesToCsv(filteredCandidates);
+    const safeTitle = (job.jobTitle || "resumeiq-results").replace(/[^a-z0-9]+/gi, "-").toLowerCase();
+    downloadCsv(`${safeTitle}.csv`, csv);
   }
 
   async function handleSubmit() {
@@ -133,13 +140,24 @@ export default function Home() {
             <h2 className="text-xl font-semibold text-slate-900">
               {job.jobTitle ? `Results for ${job.jobTitle}` : "Results"}
             </h2>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="text-sm font-medium text-brand-600 hover:text-brand-700"
-            >
-              Start new screening
-            </button>
+            <div className="flex items-center gap-4">
+              {filteredCandidates.length > 0 && (
+                <button
+                  type="button"
+                  onClick={handleExportCsv}
+                  className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                >
+                  Export CSV
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={handleReset}
+                className="text-sm font-medium text-brand-600 hover:text-brand-700"
+              >
+                Start new screening
+              </button>
+            </div>
           </div>
           {poll.candidates.length > 0 ? (
             <>
