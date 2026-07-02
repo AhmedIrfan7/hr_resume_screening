@@ -128,6 +128,20 @@
         "mode": "runOnceForEachItem",
         "jsCode": "// n8n's continueErrorOutput items don't reliably carry a `text` field, so its\n// absence (vs. present-but-short) is how we tell \"extraction failed\" apart from\n// \"extracted fine but the PDF had no real text (e.g. a scanned image)\".\nconst source = $('Split Resume Files').item.json;\nconst hasTextField = Object.prototype.hasOwnProperty.call($json, 'text');\n\nlet errorMessage;\nif (!hasTextField) {\n  errorMessage = 'PDF extraction failed' + ($json.error && $json.error.message ? ': ' + $json.error.message : '');\n} else {\n  errorMessage = 'No extractable text found (resume may be a scanned image PDF)';\n}\n\nreturn {\n  json: {\n    batchId: source.batchId,\n    fileName: source.fileName,\n    errorMessage,\n    occurredAt: new Date().toISOString()\n  }\n};"
       }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000010",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [1320, -280],
+      "parameters": {
+        "model": { "__rl": true, "value": "gpt-4o-mini", "mode": "list", "cachedResultName": "gpt-4o-mini" },
+        "options": { "temperature": 0.1 }
+      },
+      "credentials": {
+        "openAiApi": { "id": "REPLACE_WITH_YOUR_OPENAI_CRED_ID", "name": "OpenAI account" }
+      }
     }
   ],
   "connections": {
