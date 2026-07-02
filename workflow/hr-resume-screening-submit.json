@@ -14,9 +14,26 @@
         "responseMode": "responseNode",
         "options": {}
       }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000002",
+      "name": "Validate Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first();\nconst body = item.json || {};\nconst binary = item.binary || {};\n\nconst batchId = (body.batchId || '').toString().trim();\nconst jobTitle = (body.jobTitle || '').toString().trim();\nconst jobDescription = (body.jobDescription || '').toString().trim();\nconst mustHaveSkills = (body.mustHaveSkills || '').toString().trim();\nconst niceToHaveSkills = (body.niceToHaveSkills || '').toString().trim();\n\nconst fileKeys = Object.keys(binary).filter((k) => k.toLowerCase().startsWith('files'));\nconst totalFiles = fileKeys.length;\n\nconst errors = [];\nif (!batchId) errors.push('Missing batchId');\nif (!jobDescription) errors.push('Missing jobDescription');\nif (totalFiles === 0) errors.push('No resume files uploaded');\n\nconst nonPdf = fileKeys.filter((k) => {\n  const mime = (binary[k].mimeType || '').toLowerCase();\n  return mime !== 'application/pdf';\n});\nif (nonPdf.length > 0) errors.push('Only PDF resumes are supported (' + nonPdf.length + ' non-PDF file(s) rejected)');\n\nreturn [{\n  json: {\n    isValid: errors.length === 0,\n    validationError: errors.join('; '),\n    batchId,\n    jobTitle,\n    jobDescription,\n    mustHaveSkills,\n    niceToHaveSkills,\n    totalFiles\n  },\n  binary\n}];"
+      }
     }
   ],
-  "connections": {},
+  "connections": {
+    "Submit Webhook": {
+      "main": [
+        [{ "node": "Validate Payload", "type": "main", "index": 0 }]
+      ]
+    }
+  },
   "pinData": {},
   "active": false,
   "settings": {
