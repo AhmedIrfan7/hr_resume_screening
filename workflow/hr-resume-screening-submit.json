@@ -95,6 +95,39 @@
         "binaryPropertyName": "data",
         "options": {}
       }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000008",
+      "name": "Has Text?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1100, -60],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-has-text",
+              "leftValue": "={{ ($json.text || '').trim().length }}",
+              "rightValue": 20,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000009",
+      "name": "Prepare Error Log",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1100, 220],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// n8n's continueErrorOutput items don't reliably carry a `text` field, so its\n// absence (vs. present-but-short) is how we tell \"extraction failed\" apart from\n// \"extracted fine but the PDF had no real text (e.g. a scanned image)\".\nconst source = $('Split Resume Files').item.json;\nconst hasTextField = Object.prototype.hasOwnProperty.call($json, 'text');\n\nlet errorMessage;\nif (!hasTextField) {\n  errorMessage = 'PDF extraction failed' + ($json.error && $json.error.message ? ': ' + $json.error.message : '');\n} else {\n  errorMessage = 'No extractable text found (resume may be a scanned image PDF)';\n}\n\nreturn {\n  json: {\n    batchId: source.batchId,\n    fileName: source.fileName,\n    errorMessage,\n    occurredAt: new Date().toISOString()\n  }\n};"
+      }
     }
   ],
   "connections": {
@@ -120,6 +153,18 @@
     "Split Resume Files": {
       "main": [
         [{ "node": "Extract PDF Text", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extract PDF Text": {
+      "main": [
+        [{ "node": "Has Text?", "type": "main", "index": 0 }],
+        [{ "node": "Prepare Error Log", "type": "main", "index": 0 }]
+      ]
+    },
+    "Has Text?": {
+      "main": [
+        [],
+        [{ "node": "Prepare Error Log", "type": "main", "index": 0 }]
       ]
     }
   },
