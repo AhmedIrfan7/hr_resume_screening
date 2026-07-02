@@ -3,10 +3,11 @@
 import { useEffect, useState } from "react";
 import { JobDescriptionForm } from "@/components/screening/JobDescriptionForm";
 import { ProcessingView } from "@/components/screening/ProcessingView";
+import { RankedCandidateTable } from "@/components/screening/RankedCandidateTable";
 import { ResumeDropzone } from "@/components/screening/ResumeDropzone";
 import { usePollResults } from "@/hooks/usePollResults";
 import { generateBatchId, submitBatch } from "@/lib/api";
-import type { JobDetails } from "@/lib/types";
+import type { Candidate, JobDetails } from "@/lib/types";
 
 type ScreeningState = "idle" | "processing" | "results";
 
@@ -29,6 +30,7 @@ export default function Home() {
   const [batch, setBatch] = useState<BatchState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
 
   const canSubmit = job.jobDescription.trim().length > 0 && files.length > 0 && !isSubmitting;
 
@@ -46,6 +48,7 @@ export default function Home() {
     setFiles([]);
     setBatch(null);
     setSubmitError(null);
+    setSelectedCandidate(null);
   }
 
   async function handleSubmit() {
@@ -121,7 +124,29 @@ export default function Home() {
               Start new screening
             </button>
           </div>
-          <p className="text-slate-500">Ranked candidate table goes here.</p>
+          {poll.candidates.length > 0 ? (
+            <RankedCandidateTable candidates={poll.candidates} onSelect={setSelectedCandidate} />
+          ) : (
+            <p className="text-slate-500">No candidates processed yet.</p>
+          )}
+
+          {selectedCandidate && (
+            <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+              <div className="mb-2 flex items-center justify-between">
+                <h3 className="font-semibold text-slate-900">
+                  {selectedCandidate.candidateName || selectedCandidate.fileName}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCandidate(null)}
+                  className="text-sm text-slate-400 hover:text-slate-600"
+                >
+                  Close
+                </button>
+              </div>
+              <p className="text-sm text-slate-600">{selectedCandidate.summary}</p>
+            </div>
+          )}
         </section>
       )}
     </main>
