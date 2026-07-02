@@ -1,0 +1,76 @@
+import type { JobDetails, ResultsResponse, SubmitErrorResponse, SubmitResponse } from "./types";
+
+function requireEnv(name: string, value: string | undefined): string {
+  if (!value) {
+    throw new Error(
+      `Missing ${name}. Copy .env.local.example to .env.local and set your n8n webhook URLs.`
+    );
+  }
+  return value;
+}
+
+function submitWebhookUrl(): string {
+  return requireEnv(
+    "NEXT_PUBLIC_N8N_SUBMIT_WEBHOOK_URL",
+    process.env.NEXT_PUBLIC_N8N_SUBMIT_WEBHOOK_URL
+  );
+}
+
+function resultsWebhookUrl(): string {
+  return requireEnv(
+    "NEXT_PUBLIC_N8N_RESULTS_WEBHOOK_URL",
+    process.env.NEXT_PUBLIC_N8N_RESULTS_WEBHOOK_URL
+  );
+}
+
+export function generateBatchId(): string {
+  return crypto.randomUUID();
+}
+
+export async function submitBatch(
+  batchId: string,
+  job: JobDetails,
+  files: File[]
+): Promise<SubmitResponse> {
+  const formData = new FormData();
+  formData.append("batchId", batchId);
+  formData.append("jobTitle", job.jobTitle);
+  formData.append("jobDescription", job.jobDescription);
+  formData.append("mustHaveSkills", job.mustHaveSkills);
+  formData.append("niceToHaveSkills", job.niceToHaveSkills);
+
+  // Each file gets its own field name (files0, files1, ...) rather than a shared
+  // "files[]" array — the n8n workflow splits resumes by matching binary keys that
+  // start with "files", and giving each file a unique key sidesteps ambiguity in
+  // how multipart parsers handle repeated field names.
+  files.forEach((file, index) => {
+    formData.append(`files${index}`, file, file.name);
+  });
+
+  const response = await fetch(submitWebhookUrl(), {
+    method: "POST",
+    body: formData,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error((data as SubmitErrorResponse).error || "Failed to submit resumes for screening.");
+  }
+
+  return data as SubmitResponse;
+}
+
+export async function fetchResults(batchId: string, expected: number): Promise<ResultsResponse> {
+  const url = new URL(resultsWebhookUrl());
+  url.searchParams.set("batchId", batchId);
+  url.searchParams.set("expected", String(expected));
+
+  const response = await fetch(url.toString(), { method: "GET" });
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch screening results.");
+  }
+
+  return (await response.json()) as ResultsResponse;
+}
