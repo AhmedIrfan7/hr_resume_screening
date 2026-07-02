@@ -1,0 +1,27 @@
+Jane Doe (SYNTHETIC TEST DATA — not a real person)
+jane.doe.synthetic@example.com | +1-555-0100 | linkedin.com/in/janedoe-synthetic
+
+SUMMARY
+Backend-focused software engineer with 5 years of experience building and scaling
+REST APIs and event-driven services in Python and Node.js. Led migration of a
+monolithic billing service to microservices, cutting p95 latency by 40%.
+
+EXPERIENCE
+Senior Software Engineer — Northwind Analytics (2022 - Present)
+- Designed and shipped a real-time event pipeline (Kafka, Python) processing 2M+ events/day
+- Mentored 3 junior engineers; introduced code review standards adopted team-wide
+- Reduced infra cost 25% by right-sizing autoscaling policies on AWS ECS
+
+Software Engineer — Contoso Retail (2020 - 2022)
+- Built REST APIs (Node.js, Express, PostgreSQL) powering the mobile checkout flow
+- Wrote integration test suite that cut regression bugs in production by ~60%
+
+EDUCATION
+B.Sc. Computer Science — Fictional State University (2016 - 2020)
+
+SKILLS
+Python, Node.js, PostgreSQL, Kafka, AWS (ECS, Lambda, RDS), Docker, REST API design,
+system design, mentoring
+
+CERTIFICATIONS
+AWS Certified Solutions Architect – Associate (2023)
