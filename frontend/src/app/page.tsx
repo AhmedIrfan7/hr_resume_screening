@@ -122,6 +122,11 @@ export default function Home() {
             totalFiles={batch.totalFiles}
             timedOut={poll.timedOut}
           />
+          {poll.error && (
+            <p role="alert" className="text-center text-sm text-amber-600">
+              {poll.error} Retrying automatically...
+            </p>
+          )}
           {poll.timedOut && (
             <button
               type="button"
@@ -159,6 +164,12 @@ export default function Home() {
               </button>
             </div>
           </div>
+          {poll.error && (
+            <p role="alert" className="mb-4 text-sm text-amber-600">
+              {poll.error}
+            </p>
+          )}
+
           {poll.candidates.length > 0 ? (
             <>
               <CandidateFilters
@@ -168,10 +179,20 @@ export default function Home() {
                 onClassificationChange={setClassificationFilter}
                 resultCount={filteredCandidates.length}
               />
-              <RankedCandidateTable candidates={filteredCandidates} onSelect={setSelectedCandidate} />
+              {filteredCandidates.length > 0 ? (
+                <RankedCandidateTable candidates={filteredCandidates} onSelect={setSelectedCandidate} />
+              ) : (
+                <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-500">
+                  No candidates match your search or filter.
+                </div>
+              )}
             </>
           ) : (
-            <p className="text-slate-500">No candidates processed yet.</p>
+            <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center text-sm text-slate-500">
+              {poll.timedOut
+                ? "No candidates finished processing. Check the Errors sheet — resumes may have failed extraction or scoring."
+                : "No candidates processed yet."}
+            </div>
           )}
 
           {selectedCandidate && (
