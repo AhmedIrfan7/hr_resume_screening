@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { JobDescriptionForm } from "@/components/screening/JobDescriptionForm";
+import { CandidateDetailModal } from "@/components/screening/CandidateDetailModal";
 import { ProcessingView } from "@/components/screening/ProcessingView";
 import { RankedCandidateTable } from "@/components/screening/RankedCandidateTable";
 import { ResumeDropzone } from "@/components/screening/ResumeDropzone";
@@ -131,21 +132,10 @@ export default function Home() {
           )}
 
           {selectedCandidate && (
-            <div className="mt-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-              <div className="mb-2 flex items-center justify-between">
-                <h3 className="font-semibold text-slate-900">
-                  {selectedCandidate.candidateName || selectedCandidate.fileName}
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setSelectedCandidate(null)}
-                  className="text-sm text-slate-400 hover:text-slate-600"
-                >
-                  Close
-                </button>
-              </div>
-              <p className="text-sm text-slate-600">{selectedCandidate.summary}</p>
-            </div>
+            <CandidateDetailModal
+              candidate={selectedCandidate}
+              onClose={() => setSelectedCandidate(null)}
+            />
           )}
         </section>
       )}
