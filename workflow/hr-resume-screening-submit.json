@@ -82,6 +82,19 @@
         "mode": "runOnceForAllItems",
         "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const binary = item.binary || {};\n  const fileKeys = Object.keys(binary).filter((k) => k.toLowerCase().startsWith('files'));\n\n  for (const key of fileKeys) {\n    const bin = binary[key];\n    results.push({\n      json: {\n        batchId: item.json.batchId,\n        jobTitle: item.json.jobTitle,\n        jobDescription: item.json.jobDescription,\n        mustHaveSkills: item.json.mustHaveSkills,\n        niceToHaveSkills: item.json.niceToHaveSkills,\n        totalFiles: item.json.totalFiles,\n        fileName: bin.fileName || key\n      },\n      binary: { data: bin }\n    });\n  }\n}\n\nreturn results;"
       }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000007",
+      "name": "Extract PDF Text",
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [880, 40],
+      "onError": "continueErrorOutput",
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "data",
+        "options": {}
+      }
     }
   ],
   "connections": {
@@ -102,6 +115,11 @@
           { "node": "Split Resume Files", "type": "main", "index": 0 }
         ],
         [{ "node": "Respond Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Split Resume Files": {
+      "main": [
+        [{ "node": "Extract PDF Text", "type": "main", "index": 0 }]
       ]
     }
   },
