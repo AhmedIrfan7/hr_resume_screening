@@ -1,4 +1,4 @@
-import { Award, GraduationCap, Mail, Phone, ShieldCheck, Sparkles, X } from "lucide-react";
+import { Award, ChevronLeft, GraduationCap, Mail, Phone, ShieldCheck, Sparkles, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { classificationClass, classificationIcon } from "@/lib/candidateStyles";
 import type { Candidate } from "@/lib/types";
@@ -78,16 +78,16 @@ export function CandidateDetailModal({ candidate, onClose }: CandidateDetailModa
       onClick={onClose}
     >
       <div
-        className="max-h-[85vh] w-full max-w-2xl origin-center animate-scale-in overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl sm:p-7"
+        className="flex max-h-[85vh] w-full max-w-2xl origin-center animate-scale-in flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="mb-5 flex items-start justify-between">
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-slate-100 bg-white/95 p-6 backdrop-blur sm:p-7 sm:pb-5">
           <div className="flex items-center gap-3">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-card">
               {initials(displayName)}
             </span>
             <div>
-              <h3 className="text-lg font-semibold text-slate-900">{displayName}</h3>
+              <h3 className="font-display text-lg font-bold text-slate-900">{displayName}</h3>
               <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
                 {candidate.email && (
                   <span className="inline-flex items-center gap-1">
@@ -107,11 +107,13 @@ export function CandidateDetailModal({ candidate, onClose }: CandidateDetailModa
             type="button"
             onClick={onClose}
             aria-label="Close candidate details"
-            className="rounded-md p-1.5 text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           >
             <X className="h-[18px] w-[18px]" strokeWidth={2} />
           </button>
         </div>
+
+        <div className="overflow-y-auto p-6 sm:p-7 sm:pt-5">
 
         <div className="mb-5 flex items-center gap-3">
           <span
@@ -197,6 +199,18 @@ export function CandidateDetailModal({ candidate, onClose }: CandidateDetailModa
             <dd className="mt-0.5 text-slate-700">{candidate.certifications || "None listed"}</dd>
           </div>
         </dl>
+        </div>
+
+        <div className="border-t border-slate-100 bg-slate-50/60 p-4 sm:px-7">
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+          >
+            <ChevronLeft className="h-4 w-4" strokeWidth={2.25} />
+            Back to results
+          </button>
+        </div>
       </div>
     </div>
   );

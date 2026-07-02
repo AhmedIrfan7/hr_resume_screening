@@ -8,8 +8,8 @@ export function Header() {
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-700 text-sm font-bold text-white shadow-card">
             <Sparkles className="h-[18px] w-[18px]" strokeWidth={2.25} />
           </div>
-          <span className="text-lg font-semibold tracking-tight text-slate-900">
-            Resume<span className="text-brand-600">IQ</span>
+          <span className="font-display text-lg font-bold tracking-tight text-slate-900">
+            Resume<span className="bg-gradient-to-r from-brand-600 to-fuchsia-600 bg-clip-text text-transparent">IQ</span>
           </span>
         </div>
         <span className="hidden animate-fade-in-up items-center gap-1.5 text-sm text-slate-500 sm:flex">

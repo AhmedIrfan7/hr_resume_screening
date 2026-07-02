@@ -11,6 +11,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { Hero } from "@/components/screening/Hero";
 import { JobDescriptionForm } from "@/components/screening/JobDescriptionForm";
 import { CandidateDetailModal } from "@/components/screening/CandidateDetailModal";
 import { CandidateFilters } from "@/components/screening/CandidateFilters";
@@ -105,6 +106,7 @@ export default function Home() {
     <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
       {state === "idle" && (
         <section aria-label="Job details and resume upload" className="space-y-6">
+          <Hero />
           <JobDescriptionForm value={job} onChange={setJob} />
           <ResumeDropzone files={files} onChange={setFiles} />
 
@@ -173,7 +175,7 @@ export default function Home() {
       {state === "results" && (
         <section aria-label="Ranked candidates" className="animate-fade-in-up">
           <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <h2 className="flex items-center gap-2 text-xl font-semibold text-slate-900">
+            <h2 className="flex items-center gap-2 font-display text-xl font-bold text-slate-900">
               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-50 text-amber-500">
                 <Trophy className="h-4 w-4" strokeWidth={2.25} />
               </span>

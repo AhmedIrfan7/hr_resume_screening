@@ -28,7 +28,7 @@ function RankBadge({ rank }: { rank: number }) {
 
 export function RankedCandidateTable({ candidates, onSelect }: RankedCandidateTableProps) {
   return (
-    <div className="animate-fade-in-up overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-card">
+    <div className="animate-fade-in-up overflow-hidden rounded-3xl border border-slate-200 bg-white/90 shadow-card backdrop-blur-sm">
       <table className="min-w-full divide-y divide-slate-200 text-sm">
         <thead className="bg-slate-50/80">
           <tr>

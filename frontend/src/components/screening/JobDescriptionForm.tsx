@@ -15,12 +15,12 @@ export function JobDescriptionForm({ value, onChange }: JobDescriptionFormProps)
   }
 
   return (
-    <div className="animate-fade-in-up space-y-5 rounded-2xl border border-slate-200 bg-white p-6 shadow-card transition-shadow duration-300 hover:shadow-card-hover sm:p-7">
+    <div className="animate-fade-in-up space-y-5 rounded-3xl border border-slate-200 bg-white/90 p-6 shadow-card backdrop-blur-sm transition-shadow duration-300 hover:shadow-card-hover sm:p-7">
       <div className="flex items-center gap-2.5">
         <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-50 text-brand-600">
           <Briefcase className="h-4 w-4" strokeWidth={2.25} />
         </span>
-        <h2 className="text-base font-semibold text-slate-900">Job details</h2>
+        <h2 className="font-display text-base font-bold text-slate-900">Job details</h2>
       </div>
 
       <div>

@@ -10,7 +10,7 @@ export function ProcessingView({ processedCount, totalFiles, timedOut }: Process
   const percent = totalFiles > 0 ? Math.min(100, Math.round((processedCount / totalFiles) * 100)) : 0;
 
   return (
-    <div className="animate-scale-in rounded-2xl border border-slate-200 bg-white p-10 text-center shadow-card sm:p-14">
+    <div className="animate-scale-in rounded-3xl border border-slate-200 bg-white/90 p-10 text-center shadow-card backdrop-blur-sm sm:p-14">
       <div className="relative mx-auto mb-6 flex h-16 w-16 items-center justify-center">
         {!timedOut && (
           <>
@@ -34,7 +34,7 @@ export function ProcessingView({ processedCount, totalFiles, timedOut }: Process
         </span>
       </div>
 
-      <h2 className="text-base font-semibold text-slate-900">
+      <h2 className="font-display text-base font-bold text-slate-900">
         {timedOut ? "Still processing — check back shortly" : "Screening resumes"}
         {!timedOut && <span className="inline-block w-6 text-brand-600">...</span>}
       </h2>
