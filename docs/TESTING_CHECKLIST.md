@@ -31,6 +31,19 @@ Use `sample-data/sample-resume-synthetic.txt` as a reference for what a good tes
 - [ ] Submit a batch where one resume is corrupted or password-protected — that resume fails gracefully (logged to the `Errors` sheet tab), the other resumes in the batch still complete and appear in results
 - [ ] Turn off wifi briefly during polling, then reconnect — an amber "retrying automatically" message appears during the outage and results resume once connectivity returns (no crash, no stuck spinner)
 
+## Inbox resume sourcing (optional feature)
+
+Skip this section entirely if you haven't set up [section 10 of SETUP_GUIDE.md](SETUP_GUIDE.md#10-optional-gmail-inbox-resume-sourcing).
+
+- [ ] Email a PDF resume as an attachment to the Gmail inbox the Inbox Ingest workflow watches
+- [ ] Within ~1 minute, the n8n execution log shows the Inbox Ingest workflow ran and the PDF appears in the `InboxResumes` sheet tab with sender/subject/filename populated
+- [ ] Reload the ResumeIQ frontend — a "From inbox" panel appears next to the job description form, showing that resume with sender name, subject, and a relative timestamp (e.g. "5m ago")
+- [ ] Check the checkbox next to it — a "1 selected" badge appears, and "Start screening" becomes enabled even with zero drag-and-dropped files
+- [ ] Select that inbox resume AND drag-drop 1-2 more PDFs in the same batch, then submit — results include candidates from both sources, all scored consistently
+- [ ] Open the Google Sheet `Candidates` tab — the inbox-sourced row has the correct `fileName` and full extracted/scored data, same as an uploaded one
+- [ ] Run a second screening later and re-select the same inbox resume — it's still selectable (list doesn't remove items after use) and produces a fresh, independent result row
+- [ ] With `NEXT_PUBLIC_N8N_INBOX_WEBHOOK_URL` unset (or the Inbox List workflow inactive), reload the frontend — no "From inbox" panel, no console errors, drag-and-drop upload still works normally
+
 ## Cross-browser / responsive
 
 - [ ] Test in Chrome and at least one other browser (Firefox/Safari/Edge)
