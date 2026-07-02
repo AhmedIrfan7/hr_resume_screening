@@ -31,12 +31,28 @@
       "credentials": {
         "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Sheets account" }
       }
+    },
+    {
+      "id": "c2000001-0000-0000-0000-000000000003",
+      "name": "Rank Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const query = $('Results Webhook').first().json.query || {};\nconst batchId = (query.batchId || '').toString().trim();\nconst expected = parseInt(query.expected, 10) || 0;\n\nconst rows = $input.all().map((item) => item.json);\nconst matched = rows.filter((row) => (row.batchId || '').toString().trim() === batchId);\n\nconst candidates = matched\n  .map((row) => ({\n    fileName: row.fileName || '',\n    candidateName: row.candidateName || '',\n    email: row.email || '',\n    phone: row.phone || '',\n    yearsExperience: row.yearsExperience || '',\n    skills: row.skills || '',\n    education: row.education || '',\n    certifications: row.certifications || '',\n    summary: row.summary || '',\n    score: Number(row.score) || 0,\n    classification: row.classification || '',\n    skillMatchScore: Number(row.skillMatchScore) || 0,\n    experienceScore: Number(row.experienceScore) || 0,\n    achievementScore: Number(row.achievementScore) || 0,\n    educationScore: Number(row.educationScore) || 0,\n    clarityScore: Number(row.clarityScore) || 0,\n    strengths: row.strengths || '',\n    gaps: row.gaps || '',\n    recommendation: row.recommendation || '',\n    processedAt: row.processedAt || ''\n  }))\n  .sort((a, b) => b.score - a.score)\n  .map((c, i) => ({ ...c, rank: i + 1 }));\n\nconst processedCount = candidates.length;\n\nreturn [{\n  json: {\n    batchId,\n    expected,\n    processedCount,\n    isComplete: expected > 0 && processedCount >= expected,\n    candidates\n  }\n}];"
+      }
     }
   ],
   "connections": {
     "Results Webhook": {
       "main": [
         [{ "node": "Get Candidates", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get Candidates": {
+      "main": [
+        [{ "node": "Rank Results", "type": "main", "index": 0 }]
       ]
     }
   },
