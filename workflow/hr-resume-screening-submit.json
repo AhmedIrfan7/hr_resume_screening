@@ -157,6 +157,17 @@
           "systemPromptTemplate": "You are an expert technical recruiter extracting structured data from a resume. Extract only information explicitly present in the text — never guess or invent values. If a field is not present, use an empty string (or empty array for list fields)."
         }
       }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000012",
+      "name": "Prepare Scoring Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1540, -60],
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const meta = $('Split Resume Files').item.json;\nconst profile = $json.output || $json;\n\nconst rubric = `Score this candidate for the role below using this weighted rubric (integers, must sum to the max for each category):\n- Skills Match (0-30): overlap between candidate skills and must-have/nice-to-have skills\n- Experience Relevance (0-25): relevance and seniority of past roles vs this job\n- Achievements & Impact (0-20): concrete, measurable accomplishments\n- Education & Certifications (0-10): relevance of degrees/certifications\n- Resume Clarity (0-15): how clearly the resume communicates the above\n\nOverall score = sum of the five category scores (0-100).`;\n\nconst scoringText = `JOB TITLE: ${meta.jobTitle || 'Not specified'}\nJOB DESCRIPTION:\n${meta.jobDescription}\n\nMUST-HAVE SKILLS: ${meta.mustHaveSkills || 'Not specified'}\nNICE-TO-HAVE SKILLS: ${meta.niceToHaveSkills || 'Not specified'}\n\n${rubric}\n\nCANDIDATE PROFILE (already extracted from resume):\n${JSON.stringify(profile)}`;\n\nreturn {\n  json: {\n    ...meta,\n    profile,\n    scoringText\n  }\n};"
+      }
     }
   ],
   "connections": {
@@ -199,6 +210,11 @@
     "OpenAI Chat Model": {
       "ai_languageModel": [
         [{ "node": "Extract Candidate Profile", "type": "ai_languageModel", "index": 0 }]
+      ]
+    },
+    "Extract Candidate Profile": {
+      "main": [
+        [{ "node": "Prepare Scoring Input", "type": "main", "index": 0 }]
       ]
     }
   },
