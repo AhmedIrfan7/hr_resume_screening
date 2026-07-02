@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { Hero } from "@/components/screening/Hero";
+import { InboxResumeList } from "@/components/screening/InboxResumeList";
 import { JobDescriptionForm } from "@/components/screening/JobDescriptionForm";
 import { CandidateDetailModal } from "@/components/screening/CandidateDetailModal";
 import { CandidateFilters } from "@/components/screening/CandidateFilters";
@@ -19,7 +20,7 @@ import { ProcessingView } from "@/components/screening/ProcessingView";
 import { RankedCandidateTable } from "@/components/screening/RankedCandidateTable";
 import { ResumeDropzone } from "@/components/screening/ResumeDropzone";
 import { usePollResults } from "@/hooks/usePollResults";
-import { generateBatchId, submitBatch } from "@/lib/api";
+import { generateBatchId, isInboxFeatureEnabled, submitBatch } from "@/lib/api";
 import { candidatesToCsv, downloadCsv } from "@/lib/csv";
 import type { Candidate, JobDetails } from "@/lib/types";
 
@@ -41,6 +42,7 @@ export default function Home() {
   const [state, setState] = useState<ScreeningState>("idle");
   const [job, setJob] = useState<JobDetails>(EMPTY_JOB);
   const [files, setFiles] = useState<File[]>([]);
+  const [selectedInboxIds, setSelectedInboxIds] = useState<string[]>([]);
   const [batch, setBatch] = useState<BatchState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -48,7 +50,10 @@ export default function Home() {
   const [search, setSearch] = useState("");
   const [classificationFilter, setClassificationFilter] = useState("All");
 
-  const canSubmit = job.jobDescription.trim().length > 0 && files.length > 0 && !isSubmitting;
+  const canSubmit =
+    job.jobDescription.trim().length > 0 &&
+    files.length + selectedInboxIds.length > 0 &&
+    !isSubmitting;
 
   const poll = usePollResults(batch?.batchId ?? null, batch?.totalFiles ?? 0, state === "processing");
 
@@ -75,6 +80,7 @@ export default function Home() {
     setState("idle");
     setJob(EMPTY_JOB);
     setFiles([]);
+    setSelectedInboxIds([]);
     setBatch(null);
     setSubmitError(null);
     setSelectedCandidate(null);
@@ -92,7 +98,7 @@ export default function Home() {
 
     try {
       const batchId = generateBatchId();
-      const response = await submitBatch(batchId, job, files);
+      const response = await submitBatch(batchId, job, files, selectedInboxIds);
       setBatch({ batchId: response.batchId, totalFiles: response.totalFiles });
       setState("processing");
     } catch (err) {
@@ -102,45 +108,61 @@ export default function Home() {
     }
   }
 
+  const inboxEnabled = isInboxFeatureEnabled();
+
   return (
-    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
+    <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
       {state === "idle" && (
         <section aria-label="Job details and resume upload" className="space-y-6">
           <Hero />
-          <JobDescriptionForm value={job} onChange={setJob} />
-          <ResumeDropzone files={files} onChange={setFiles} />
+          <div className={`grid gap-6 ${inboxEnabled ? "lg:grid-cols-3" : ""}`}>
+            <div className={`space-y-6 ${inboxEnabled ? "lg:col-span-2" : ""}`}>
+              <JobDescriptionForm value={job} onChange={setJob} />
+              <ResumeDropzone files={files} onChange={setFiles} />
 
-          {submitError && (
-            <p
-              role="alert"
-              className="flex animate-fade-in items-start gap-2 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm text-red-700"
-            >
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
-              {submitError}
-            </p>
-          )}
+              {submitError && (
+                <p
+                  role="alert"
+                  className="flex animate-fade-in items-start gap-2 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm text-red-700"
+                >
+                  <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+                  {submitError}
+                </p>
+              )}
 
-          <button
-            type="button"
-            disabled={!canSubmit}
-            onClick={handleSubmit}
-            className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-3 text-sm font-semibold text-white shadow-card transition-all duration-200 hover:shadow-card-hover hover:brightness-105 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
-                Submitting...
-              </>
-            ) : (
-              <>
-                Start screening
-                <ArrowRight
-                  className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
-                  strokeWidth={2.5}
-                />
-              </>
+              <button
+                type="button"
+                disabled={!canSubmit}
+                onClick={handleSubmit}
+                className="group flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-3 text-sm font-semibold text-white shadow-card transition-all duration-200 hover:shadow-card-hover hover:brightness-105 active:scale-[0.99] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:from-slate-300 disabled:to-slate-300 disabled:shadow-none"
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" strokeWidth={2.5} />
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    Start screening
+                    {files.length + selectedInboxIds.length > 0 &&
+                      ` (${files.length + selectedInboxIds.length} resume${
+                        files.length + selectedInboxIds.length === 1 ? "" : "s"
+                      })`}
+                    <ArrowRight
+                      className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-0.5"
+                      strokeWidth={2.5}
+                    />
+                  </>
+                )}
+              </button>
+            </div>
+
+            {inboxEnabled && (
+              <div>
+                <InboxResumeList selectedIds={selectedInboxIds} onChange={setSelectedInboxIds} />
+              </div>
             )}
-          </button>
+          </div>
         </section>
       )}
 
