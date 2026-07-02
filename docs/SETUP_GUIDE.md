@@ -24,7 +24,13 @@ Follow these steps in order — the workflows won't run correctly until the Goog
    batchId | fileName | errorMessage | occurredAt
    ```
 
-4. Copy the Sheet ID from the URL — it's the long string between `/d/` and `/edit`:
+4. Add a third tab named **`InboxResumes`** with this header row (only needed if you're using the optional Gmail inbox sourcing feature — see [section 10](#10-optional-gmail-inbox-resume-sourcing)):
+
+   ```
+   id | fileName | senderEmail | senderName | subject | receivedAt | driveFileId
+   ```
+
+5. Copy the Sheet ID from the URL — it's the long string between `/d/` and `/edit`:
    `https://docs.google.com/spreadsheets/d/`**`THIS_PART_IS_THE_ID`**`/edit`
 
 ## 3. n8n Cloud setup & credentials
