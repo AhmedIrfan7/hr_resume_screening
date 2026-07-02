@@ -1,4 +1,11 @@
-import type { JobDetails, ResultsResponse, SubmitErrorResponse, SubmitResponse } from "./types";
+import type {
+  InboxListResponse,
+  InboxResume,
+  JobDetails,
+  ResultsResponse,
+  SubmitErrorResponse,
+  SubmitResponse,
+} from "./types";
 
 function requireEnv(name: string, value: string | undefined): string {
   if (!value) {
@@ -23,6 +30,13 @@ function resultsWebhookUrl(): string {
   );
 }
 
+function inboxWebhookUrl(): string {
+  return requireEnv(
+    "NEXT_PUBLIC_N8N_INBOX_WEBHOOK_URL",
+    process.env.NEXT_PUBLIC_N8N_INBOX_WEBHOOK_URL
+  );
+}
+
 async function parseJsonResponse<T>(response: Response): Promise<T> {
   const text = await response.text();
   if (!text) {
@@ -43,10 +57,26 @@ export function generateBatchId(): string {
   return crypto.randomUUID();
 }
 
+export function isInboxFeatureEnabled(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_N8N_INBOX_WEBHOOK_URL);
+}
+
+export async function fetchInboxResumes(): Promise<InboxResume[]> {
+  const response = await fetch(inboxWebhookUrl(), { method: "GET" });
+  const data = await parseJsonResponse<InboxListResponse>(response);
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch inbox resumes.");
+  }
+
+  return data.resumes;
+}
+
 export async function submitBatch(
   batchId: string,
   job: JobDetails,
-  files: File[]
+  files: File[],
+  inboxResumeIds: string[] = []
 ): Promise<SubmitResponse> {
   const formData = new FormData();
   formData.append("batchId", batchId);
@@ -54,6 +84,7 @@ export async function submitBatch(
   formData.append("jobDescription", job.jobDescription);
   formData.append("mustHaveSkills", job.mustHaveSkills);
   formData.append("niceToHaveSkills", job.niceToHaveSkills);
+  formData.append("inboxResumeIds", JSON.stringify(inboxResumeIds));
 
   // Each file gets its own field name (files0, files1, ...) rather than a shared
   // "files[]" array — the n8n workflow splits resumes by matching binary keys that

@@ -48,3 +48,16 @@ export interface ResultsResponse {
   isComplete: boolean;
   candidates: Candidate[];
 }
+
+export interface InboxResume {
+  id: string;
+  fileName: string;
+  senderEmail: string;
+  senderName: string;
+  subject: string;
+  receivedAt: string;
+}
+
+export interface InboxListResponse {
+  resumes: InboxResume[];
+}
