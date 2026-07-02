@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/build/
+.vercel
+
+# Env files (never commit real secrets)
+.env
+.env.local
+.env.*.local
+!.env.local.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Real resumes / PII — never commit actual candidate data
+sample-data/*.pdf
+sample-data/*.docx
+sample-data/real-*
+
+# Test coverage
+coverage/
