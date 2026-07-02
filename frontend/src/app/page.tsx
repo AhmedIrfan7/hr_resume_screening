@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { JobDescriptionForm } from "@/components/screening/JobDescriptionForm";
+import { ProcessingView } from "@/components/screening/ProcessingView";
 import { ResumeDropzone } from "@/components/screening/ResumeDropzone";
 import { generateBatchId, submitBatch } from "@/lib/api";
 import type { Candidate, JobDetails } from "@/lib/types";
@@ -85,11 +86,13 @@ export default function Home() {
         </section>
       )}
 
-      {state === "processing" && (
+      {state === "processing" && batch && (
         <section aria-label="Screening in progress">
-          <p className="text-slate-500">
-            Processing {batch?.processedCount ?? 0} / {batch?.totalFiles ?? 0} resumes...
-          </p>
+          <ProcessingView
+            processedCount={batch.processedCount}
+            totalFiles={batch.totalFiles}
+            timedOut={false}
+          />
         </section>
       )}
 
