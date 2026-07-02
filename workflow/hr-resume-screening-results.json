@@ -54,6 +54,19 @@
         "responseBody": "={{ $json }}",
         "options": { "responseCode": 200 }
       }
+    },
+    {
+      "id": "c2000001-0000-0000-0000-000000000005",
+      "name": "Sticky Note - Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-20, -260],
+      "parameters": {
+        "content": "## RESUMEIQ — RESULTS WORKFLOW\n\nPolled by the frontend every ~2.5s while a batch is processing. Reads the whole `Candidates` sheet, filters to the requested `batchId`, sorts by score, and reports progress so the frontend knows when to stop polling.\n\n**SETUP CHECKLIST**\n1. Replace `REPLACE_WITH_YOUR_GOOGLE_SHEET_ID` and the Google Sheets credential placeholder\n2. Activate the workflow, copy the webhook's production URL into `NEXT_PUBLIC_N8N_RESULTS_WEBHOOK_URL`\n\nQuery params expected: `?batchId=<uuid>&expected=<totalFiles>` (the frontend already knows `expected` from the submit response).",
+        "height": 260,
+        "width": 480,
+        "color": 4
+      }
     }
   ],
   "connections": {
