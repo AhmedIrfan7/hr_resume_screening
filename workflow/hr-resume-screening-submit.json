@@ -142,6 +142,21 @@
       "credentials": {
         "openAiApi": { "id": "REPLACE_WITH_YOUR_OPENAI_CRED_ID", "name": "OpenAI account" }
       }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000011",
+      "name": "Extract Candidate Profile",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.1,
+      "position": [1320, -60],
+      "parameters": {
+        "text": "={{ $json.text }}",
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"candidateName\": { \"type\": \"string\", \"description\": \"Full name of the candidate\" },\n    \"email\": { \"type\": \"string\", \"description\": \"Email address\" },\n    \"phone\": { \"type\": \"string\", \"description\": \"Phone number\" },\n    \"yearsExperience\": { \"type\": \"number\", \"description\": \"Total years of professional experience, estimated from work history\" },\n    \"skills\": { \"type\": \"array\", \"items\": { \"type\": \"string\" }, \"description\": \"Technical and professional skills\" },\n    \"education\": { \"type\": \"string\", \"description\": \"Highest degree and institution\" },\n    \"certifications\": { \"type\": \"array\", \"items\": { \"type\": \"string\" }, \"description\": \"Professional certifications\" },\n    \"summary\": { \"type\": \"string\", \"description\": \"2-3 sentence professional summary of the candidate\" }\n  },\n  \"required\": [\"candidateName\", \"email\"]\n}",
+        "options": {
+          "systemPromptTemplate": "You are an expert technical recruiter extracting structured data from a resume. Extract only information explicitly present in the text — never guess or invent values. If a field is not present, use an empty string (or empty array for list fields)."
+        }
+      }
     }
   ],
   "connections": {
@@ -177,8 +192,13 @@
     },
     "Has Text?": {
       "main": [
-        [],
+        [{ "node": "Extract Candidate Profile", "type": "main", "index": 0 }],
         [{ "node": "Prepare Error Log", "type": "main", "index": 0 }]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [{ "node": "Extract Candidate Profile", "type": "ai_languageModel", "index": 0 }]
       ]
     }
   },
