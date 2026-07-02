@@ -237,6 +237,71 @@
       "credentials": {
         "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Sheets account" }
       }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000016",
+      "name": "Log Error to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1320, 220],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Errors", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "batchId": "={{ $json.batchId }}",
+            "fileName": "={{ $json.fileName }}",
+            "errorMessage": "={{ $json.errorMessage }}",
+            "occurredAt": "={{ $json.occurredAt }}"
+          }
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000017",
+      "name": "Sticky Note - Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-20, -420],
+      "parameters": {
+        "content": "## RESUMEIQ — SUBMIT WORKFLOW\n\nReceives a batch of resumes + a job description from the frontend, screens each resume with a two-stage OpenAI pipeline, and writes ranked results to Google Sheets.\n\n**SETUP CHECKLIST**\n1. Create a Google Sheet with tabs `Candidates` and `Errors` (see docs/SETUP_GUIDE.md for exact columns)\n2. Replace `REPLACE_WITH_YOUR_GOOGLE_SHEET_ID` in both Google Sheets nodes\n3. Set up credentials: OpenAI API, Google Sheets OAuth2 — replace the `REPLACE_WITH_YOUR_*_CRED_ID` placeholders\n4. Activate the workflow, copy the webhook's production URL into the frontend's `NEXT_PUBLIC_N8N_SUBMIT_WEBHOOK_URL`\n\nPDF only — DOCX resumes are rejected client-side. One bad resume never blocks the rest of the batch (see the error branches below).",
+        "height": 300,
+        "width": 480,
+        "color": 4
+      }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000018",
+      "name": "Sticky Note - Intake",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 320],
+      "parameters": {
+        "content": "## INTAKE & VALIDATION\n\nWebhook responds immediately (batchId + totalFiles) so the frontend never blocks on the AI pipeline. Invalid batches (no job description, no files, non-PDF uploads) are rejected with a 400 before any AI spend happens.",
+        "height": 180,
+        "width": 640,
+        "color": 5
+      }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000019",
+      "name": "Sticky Note - AI Pipeline",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1280, -460],
+      "parameters": {
+        "content": "## TWO-STAGE AI SCREENING\n\nStage 1 extracts a structured candidate profile from resume text. Stage 2 scores that profile against the job description using a weighted rubric (Skills 30 / Experience 25 / Achievements 20 / Education 10 / Clarity 15). Keeping extraction and scoring as separate prompts keeps each one focused and more accurate than one combined mega-prompt.",
+        "height": 160,
+        "width": 700,
+        "color": 6
+      }
     }
   ],
   "connections": {
@@ -302,6 +367,11 @@
     "Assemble Candidate Row": {
       "main": [
         [{ "node": "Save Candidate to Sheet", "type": "main", "index": 0 }]
+      ]
+    },
+    "Prepare Error Log": {
+      "main": [
+        [{ "node": "Log Error to Sheet", "type": "main", "index": 0 }]
       ]
     }
   },
