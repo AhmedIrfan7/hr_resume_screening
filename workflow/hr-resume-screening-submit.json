@@ -168,6 +168,21 @@
         "mode": "runOnceForEachItem",
         "jsCode": "const meta = $('Split Resume Files').item.json;\nconst profile = $json.output || $json;\n\nconst rubric = `Score this candidate for the role below using this weighted rubric (integers, must sum to the max for each category):\n- Skills Match (0-30): overlap between candidate skills and must-have/nice-to-have skills\n- Experience Relevance (0-25): relevance and seniority of past roles vs this job\n- Achievements & Impact (0-20): concrete, measurable accomplishments\n- Education & Certifications (0-10): relevance of degrees/certifications\n- Resume Clarity (0-15): how clearly the resume communicates the above\n\nOverall score = sum of the five category scores (0-100).`;\n\nconst scoringText = `JOB TITLE: ${meta.jobTitle || 'Not specified'}\nJOB DESCRIPTION:\n${meta.jobDescription}\n\nMUST-HAVE SKILLS: ${meta.mustHaveSkills || 'Not specified'}\nNICE-TO-HAVE SKILLS: ${meta.niceToHaveSkills || 'Not specified'}\n\n${rubric}\n\nCANDIDATE PROFILE (already extracted from resume):\n${JSON.stringify(profile)}`;\n\nreturn {\n  json: {\n    ...meta,\n    profile,\n    scoringText\n  }\n};"
       }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000013",
+      "name": "Score Candidate",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.1,
+      "position": [1760, -60],
+      "parameters": {
+        "text": "={{ $json.scoringText }}",
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"skillMatchScore\": { \"type\": \"number\", \"description\": \"0-30\" },\n    \"experienceScore\": { \"type\": \"number\", \"description\": \"0-25\" },\n    \"achievementScore\": { \"type\": \"number\", \"description\": \"0-20\" },\n    \"educationScore\": { \"type\": \"number\", \"description\": \"0-10\" },\n    \"clarityScore\": { \"type\": \"number\", \"description\": \"0-15\" },\n    \"score\": { \"type\": \"number\", \"description\": \"overall 0-100, sum of the category scores\" },\n    \"classification\": { \"type\": \"string\", \"enum\": [\"Strong Fit\", \"Fit\", \"Weak Fit\", \"Not Fit\"] },\n    \"strengths\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n    \"gaps\": { \"type\": \"array\", \"items\": { \"type\": \"string\" } },\n    \"recommendation\": { \"type\": \"string\", \"description\": \"1-2 sentence recommendation on next steps\" }\n  },\n  \"required\": [\"score\", \"classification\"]\n}",
+        "options": {
+          "systemPromptTemplate": "You are a senior hiring manager scoring a candidate against a specific job. Be objective, evidence-based, and consistent. Base every score strictly on the candidate profile and job details provided — do not assume information that isn't there."
+        }
+      }
     }
   ],
   "connections": {
@@ -209,12 +224,20 @@
     },
     "OpenAI Chat Model": {
       "ai_languageModel": [
-        [{ "node": "Extract Candidate Profile", "type": "ai_languageModel", "index": 0 }]
+        [
+          { "node": "Extract Candidate Profile", "type": "ai_languageModel", "index": 0 },
+          { "node": "Score Candidate", "type": "ai_languageModel", "index": 0 }
+        ]
       ]
     },
     "Extract Candidate Profile": {
       "main": [
         [{ "node": "Prepare Scoring Input", "type": "main", "index": 0 }]
+      ]
+    },
+    "Prepare Scoring Input": {
+      "main": [
+        [{ "node": "Score Candidate", "type": "main", "index": 0 }]
       ]
     }
   },
