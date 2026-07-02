@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { JobDescriptionForm } from "@/components/screening/JobDescriptionForm";
 import type { Candidate, JobDetails } from "@/lib/types";
 
 type ScreeningState = "idle" | "processing" | "results";
@@ -12,22 +13,30 @@ interface BatchState {
   candidates: Candidate[];
 }
 
+const EMPTY_JOB: JobDetails = {
+  jobTitle: "",
+  jobDescription: "",
+  mustHaveSkills: "",
+  niceToHaveSkills: "",
+};
+
 export default function Home() {
   const [state, setState] = useState<ScreeningState>("idle");
-  const [job, setJob] = useState<JobDetails | null>(null);
+  const [job, setJob] = useState<JobDetails>(EMPTY_JOB);
   const [batch, setBatch] = useState<BatchState | null>(null);
 
   function handleReset() {
     setState("idle");
-    setJob(null);
+    setJob(EMPTY_JOB);
     setBatch(null);
   }
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10">
       {state === "idle" && (
-        <section aria-label="Job details and resume upload">
-          <p className="text-slate-500">Upload form goes here.</p>
+        <section aria-label="Job details and resume upload" className="space-y-6">
+          <JobDescriptionForm value={job} onChange={setJob} />
+          <p className="text-slate-500">Resume upload goes here.</p>
         </section>
       )}
 
@@ -43,7 +52,7 @@ export default function Home() {
         <section aria-label="Ranked candidates">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-xl font-semibold text-slate-900">
-              {job?.jobTitle ? `Results for ${job.jobTitle}` : "Results"}
+              {job.jobTitle ? `Results for ${job.jobTitle}` : "Results"}
             </h2>
             <button
               type="button"
