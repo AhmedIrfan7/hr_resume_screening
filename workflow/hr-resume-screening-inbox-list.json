@@ -1,0 +1,107 @@
+{
+  "name": "HR Resume Screening — Inbox List",
+  "nodes": [
+    {
+      "id": "e4000001-0000-0000-0000-000000000001",
+      "name": "Inbox List Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "webhookId": "hr-screening-inbox",
+      "position": [0, 0],
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "hr-screening/inbox",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "e4000001-0000-0000-0000-000000000002",
+      "name": "Get Inbox Resumes",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [220, 0],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "read",
+        "documentId": { "__rl": true, "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "InboxResumes", "mode": "name" },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "id": "e4000001-0000-0000-0000-000000000003",
+      "name": "Sort Inbox Resumes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const rows = $input.all().map((item) => item.json).filter((row) => row.id);\n\nconst resumes = rows\n  .map((row) => ({\n    id: row.id || '',\n    fileName: row.fileName || '',\n    senderEmail: row.senderEmail || '',\n    senderName: row.senderName || '',\n    subject: row.subject || '',\n    receivedAt: row.receivedAt || ''\n  }))\n  .sort((a, b) => new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime());\n\nreturn [{ json: { resumes } }];"
+      }
+    },
+    {
+      "id": "e4000001-0000-0000-0000-000000000004",
+      "name": "Respond Inbox List",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [660, 0],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ $json }}",
+        "options": { "responseCode": 200 }
+      }
+    },
+    {
+      "id": "e4000001-0000-0000-0000-000000000099",
+      "name": "Sticky Note - Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-20, -260],
+      "parameters": {
+        "content": "## RESUMEIQ — INBOX LIST WORKFLOW\n\nCalled by the frontend when HR opens the job-description screen, so it can show a selectable list of resumes already sitting in the inbox (populated by the Inbox Ingest workflow). Read-only — never touches the sheet's data.\n\n**SETUP CHECKLIST**\n1. Replace `REPLACE_WITH_YOUR_GOOGLE_SHEET_ID` and the Google Sheets credential placeholder\n2. Activate the workflow, copy the webhook's production URL into `NEXT_PUBLIC_N8N_INBOX_WEBHOOK_URL`\n\nIf the `InboxResumes` tab doesn't exist yet (e.g. you haven't set up the optional inbox feature), this just returns an empty list instead of erroring.",
+        "height": 260,
+        "width": 480,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Inbox List Webhook": {
+      "main": [
+        [{ "node": "Get Inbox Resumes", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get Inbox Resumes": {
+      "main": [
+        [{ "node": "Sort Inbox Resumes", "type": "main", "index": 0 }]
+      ]
+    },
+    "Sort Inbox Resumes": {
+      "main": [
+        [{ "node": "Respond Inbox List", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "versionId": "hr-resume-screening-inbox-list-v1",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "resumeiq-hr-resume-screening"
+  },
+  "tags": [
+    {
+      "name": "resumeiq",
+      "createdAt": "2026-07-02T00:00:00.000Z",
+      "updatedAt": "2026-07-02T00:00:00.000Z"
+    }
+  ]
+}
