@@ -1,0 +1,8 @@
+{
+  "name": "resumeiq",
+  "private": true,
+  "description": "AI-powered HR resume screening — n8n automation + Next.js frontend.",
+  "scripts": {
+    "validate:workflows": "node scripts/validate-workflows.js"
+  }
+}
