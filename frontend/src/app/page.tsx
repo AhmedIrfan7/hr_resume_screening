@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { JobDescriptionForm } from "@/components/screening/JobDescriptionForm";
 import { CandidateDetailModal } from "@/components/screening/CandidateDetailModal";
+import { CandidateFilters } from "@/components/screening/CandidateFilters";
 import { ProcessingView } from "@/components/screening/ProcessingView";
 import { RankedCandidateTable } from "@/components/screening/RankedCandidateTable";
 import { ResumeDropzone } from "@/components/screening/ResumeDropzone";
@@ -32,10 +33,25 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [search, setSearch] = useState("");
+  const [classificationFilter, setClassificationFilter] = useState("All");
 
   const canSubmit = job.jobDescription.trim().length > 0 && files.length > 0 && !isSubmitting;
 
   const poll = usePollResults(batch?.batchId ?? null, batch?.totalFiles ?? 0, state === "processing");
+
+  const filteredCandidates = useMemo(() => {
+    const query = search.trim().toLowerCase();
+    return poll.candidates.filter((candidate) => {
+      const matchesSearch =
+        !query ||
+        candidate.candidateName.toLowerCase().includes(query) ||
+        candidate.email.toLowerCase().includes(query);
+      const matchesClassification =
+        classificationFilter === "All" || candidate.classification === classificationFilter;
+      return matchesSearch && matchesClassification;
+    });
+  }, [poll.candidates, search, classificationFilter]);
 
   useEffect(() => {
     if (state === "processing" && poll.isComplete) {
@@ -126,7 +142,16 @@ export default function Home() {
             </button>
           </div>
           {poll.candidates.length > 0 ? (
-            <RankedCandidateTable candidates={poll.candidates} onSelect={setSelectedCandidate} />
+            <>
+              <CandidateFilters
+                search={search}
+                onSearchChange={setSearch}
+                classification={classificationFilter}
+                onClassificationChange={setClassificationFilter}
+                resultCount={filteredCandidates.length}
+              />
+              <RankedCandidateTable candidates={filteredCandidates} onSelect={setSelectedCandidate} />
+            </>
           ) : (
             <p className="text-slate-500">No candidates processed yet.</p>
           )}
