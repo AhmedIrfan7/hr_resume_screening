@@ -1,6 +1,21 @@
 {
   "name": "HR Resume Screening — Results",
-  "nodes": [],
+  "nodes": [
+    {
+      "id": "c2000001-0000-0000-0000-000000000001",
+      "name": "Results Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "hr-screening-results",
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "hr-screening/results",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    }
+  ],
   "connections": {},
   "pinData": {},
   "active": false,
