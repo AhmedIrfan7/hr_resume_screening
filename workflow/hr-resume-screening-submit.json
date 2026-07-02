@@ -84,6 +84,61 @@
       }
     },
     {
+      "id": "b1000001-0000-0000-0000-000000000020",
+      "name": "Get Inbox Resumes Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [220, 560],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "read",
+        "documentId": { "__rl": true, "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "InboxResumes", "mode": "name" },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000021",
+      "name": "Match Selected Inbox Resumes",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [440, 560],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const meta = $('Validate Payload').first().json;\nconst ids = new Set(meta.inboxResumeIds || []);\nif (ids.size === 0) return [];\n\nconst rows = $input.all().map((item) => item.json);\n\nreturn rows\n  .filter((row) => ids.has((row.id || '').toString().trim()))\n  .map((row) => ({\n    json: {\n      batchId: meta.batchId,\n      jobTitle: meta.jobTitle,\n      jobDescription: meta.jobDescription,\n      mustHaveSkills: meta.mustHaveSkills,\n      niceToHaveSkills: meta.niceToHaveSkills,\n      totalFiles: meta.totalFiles,\n      fileName: row.fileName || row.id,\n      driveFileId: row.driveFileId\n    }\n  }));"
+      }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000022",
+      "name": "Download Inbox Resume",
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [660, 560],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "download",
+        "fileId": { "__rl": true, "value": "={{ $json.driveFileId }}", "mode": "id" },
+        "options": {}
+      },
+      "credentials": {
+        "googleDriveOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Drive account" }
+      }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000023",
+      "name": "Merge Resume Sources",
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [900, 260],
+      "parameters": {
+        "mode": "append",
+        "numberInputs": 2
+      }
+    },
+    {
       "id": "b1000001-0000-0000-0000-000000000007",
       "name": "Extract PDF Text",
       "type": "n8n-nodes-base.extractFromFile",
@@ -126,7 +181,7 @@
       "position": [1100, 220],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "// n8n's continueErrorOutput items don't reliably carry a `text` field, so its\n// absence (vs. present-but-short) is how we tell \"extraction failed\" apart from\n// \"extracted fine but the PDF had no real text (e.g. a scanned image)\".\nconst source = $('Split Resume Files').item.json;\nconst hasTextField = Object.prototype.hasOwnProperty.call($json, 'text');\n\nlet errorMessage;\nif (!hasTextField) {\n  errorMessage = 'PDF extraction failed' + ($json.error && $json.error.message ? ': ' + $json.error.message : '');\n} else {\n  errorMessage = 'No extractable text found (resume may be a scanned image PDF)';\n}\n\nreturn {\n  json: {\n    batchId: source.batchId,\n    fileName: source.fileName,\n    errorMessage,\n    occurredAt: new Date().toISOString()\n  }\n};"
+        "jsCode": "// n8n's continueErrorOutput items don't reliably carry a `text` field, so its\n// absence (vs. present-but-short) is how we tell \"extraction failed\" apart from\n// \"extracted fine but the PDF had no real text (e.g. a scanned image)\".\nconst source = $('Merge Resume Sources').item.json;\nconst hasTextField = Object.prototype.hasOwnProperty.call($json, 'text');\n\nlet errorMessage;\nif (!hasTextField) {\n  errorMessage = 'PDF extraction failed' + ($json.error && $json.error.message ? ': ' + $json.error.message : '');\n} else {\n  errorMessage = 'No extractable text found (resume may be a scanned image PDF)';\n}\n\nreturn {\n  json: {\n    batchId: source.batchId,\n    fileName: source.fileName,\n    errorMessage,\n    occurredAt: new Date().toISOString()\n  }\n};"
       }
     },
     {
@@ -166,7 +221,7 @@
       "position": [1540, -60],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const meta = $('Split Resume Files').item.json;\nconst profile = $json.output || $json;\n\nconst rubric = `Score this candidate for the role below using this weighted rubric (integers, must sum to the max for each category):\n- Skills Match (0-30): overlap between candidate skills and must-have/nice-to-have skills\n- Experience Relevance (0-25): relevance and seniority of past roles vs this job\n- Achievements & Impact (0-20): concrete, measurable accomplishments\n- Education & Certifications (0-10): relevance of degrees/certifications\n- Resume Clarity (0-15): how clearly the resume communicates the above\n\nOverall score = sum of the five category scores (0-100).`;\n\nconst scoringText = `JOB TITLE: ${meta.jobTitle || 'Not specified'}\nJOB DESCRIPTION:\n${meta.jobDescription}\n\nMUST-HAVE SKILLS: ${meta.mustHaveSkills || 'Not specified'}\nNICE-TO-HAVE SKILLS: ${meta.niceToHaveSkills || 'Not specified'}\n\n${rubric}\n\nCANDIDATE PROFILE (already extracted from resume):\n${JSON.stringify(profile)}`;\n\nreturn {\n  json: {\n    ...meta,\n    profile,\n    scoringText\n  }\n};"
+        "jsCode": "const meta = $('Merge Resume Sources').item.json;\nconst profile = $json.output || $json;\n\nconst rubric = `Score this candidate for the role below using this weighted rubric (integers, must sum to the max for each category):\n- Skills Match (0-30): overlap between candidate skills and must-have/nice-to-have skills\n- Experience Relevance (0-25): relevance and seniority of past roles vs this job\n- Achievements & Impact (0-20): concrete, measurable accomplishments\n- Education & Certifications (0-10): relevance of degrees/certifications\n- Resume Clarity (0-15): how clearly the resume communicates the above\n\nOverall score = sum of the five category scores (0-100).`;\n\nconst scoringText = `JOB TITLE: ${meta.jobTitle || 'Not specified'}\nJOB DESCRIPTION:\n${meta.jobDescription}\n\nMUST-HAVE SKILLS: ${meta.mustHaveSkills || 'Not specified'}\nNICE-TO-HAVE SKILLS: ${meta.niceToHaveSkills || 'Not specified'}\n\n${rubric}\n\nCANDIDATE PROFILE (already extracted from resume):\n${JSON.stringify(profile)}`;\n\nreturn {\n  json: {\n    ...meta,\n    profile,\n    scoringText\n  }\n};"
       }
     },
     {
@@ -192,7 +247,7 @@
       "position": [1980, -60],
       "parameters": {
         "mode": "runOnceForEachItem",
-        "jsCode": "const meta = $('Split Resume Files').item.json;\nconst profile = $('Extract Candidate Profile').item.json.output || $('Extract Candidate Profile').item.json;\nconst score = $json.output || $json;\n\nreturn {\n  json: {\n    batchId: meta.batchId,\n    fileName: meta.fileName,\n    candidateName: profile.candidateName || '',\n    email: profile.email || '',\n    phone: profile.phone || '',\n    yearsExperience: profile.yearsExperience || '',\n    skills: Array.isArray(profile.skills) ? profile.skills.join(', ') : (profile.skills || ''),\n    education: profile.education || '',\n    certifications: Array.isArray(profile.certifications) ? profile.certifications.join(', ') : (profile.certifications || ''),\n    summary: profile.summary || '',\n    score: score.score || 0,\n    classification: score.classification || '',\n    skillMatchScore: score.skillMatchScore || 0,\n    experienceScore: score.experienceScore || 0,\n    achievementScore: score.achievementScore || 0,\n    educationScore: score.educationScore || 0,\n    clarityScore: score.clarityScore || 0,\n    strengths: Array.isArray(score.strengths) ? score.strengths.join('; ') : (score.strengths || ''),\n    gaps: Array.isArray(score.gaps) ? score.gaps.join('; ') : (score.gaps || ''),\n    recommendation: score.recommendation || '',\n    processedAt: new Date().toISOString()\n  }\n};"
+        "jsCode": "const meta = $('Merge Resume Sources').item.json;\nconst profile = $('Extract Candidate Profile').item.json.output || $('Extract Candidate Profile').item.json;\nconst score = $json.output || $json;\n\nreturn {\n  json: {\n    batchId: meta.batchId,\n    fileName: meta.fileName,\n    candidateName: profile.candidateName || '',\n    email: profile.email || '',\n    phone: profile.phone || '',\n    yearsExperience: profile.yearsExperience || '',\n    skills: Array.isArray(profile.skills) ? profile.skills.join(', ') : (profile.skills || ''),\n    education: profile.education || '',\n    certifications: Array.isArray(profile.certifications) ? profile.certifications.join(', ') : (profile.certifications || ''),\n    summary: profile.summary || '',\n    score: score.score || 0,\n    classification: score.classification || '',\n    skillMatchScore: score.skillMatchScore || 0,\n    experienceScore: score.experienceScore || 0,\n    achievementScore: score.achievementScore || 0,\n    educationScore: score.educationScore || 0,\n    clarityScore: score.clarityScore || 0,\n    strengths: Array.isArray(score.strengths) ? score.strengths.join('; ') : (score.strengths || ''),\n    gaps: Array.isArray(score.gaps) ? score.gaps.join('; ') : (score.gaps || ''),\n    recommendation: score.recommendation || '',\n    processedAt: new Date().toISOString()\n  }\n};"
       }
     },
     {
@@ -271,7 +326,7 @@
       "typeVersion": 1,
       "position": [-20, -420],
       "parameters": {
-        "content": "## RESUMEIQ — SUBMIT WORKFLOW\n\nReceives a batch of resumes + a job description from the frontend, screens each resume with a two-stage OpenAI pipeline, and writes ranked results to Google Sheets.\n\n**SETUP CHECKLIST**\n1. Create a Google Sheet with tabs `Candidates` and `Errors` (see docs/SETUP_GUIDE.md for exact columns)\n2. Replace `REPLACE_WITH_YOUR_GOOGLE_SHEET_ID` in both Google Sheets nodes\n3. Set up credentials: OpenAI API, Google Sheets OAuth2 — replace the `REPLACE_WITH_YOUR_*_CRED_ID` placeholders\n4. Activate the workflow, copy the webhook's production URL into the frontend's `NEXT_PUBLIC_N8N_SUBMIT_WEBHOOK_URL`\n\nPDF only — DOCX resumes are rejected client-side. One bad resume never blocks the rest of the batch (see the error branches below).",
+        "content": "## RESUMEIQ — SUBMIT WORKFLOW\n\nReceives a batch of resumes from the frontend — drag-dropped uploads and/or resumes selected from the Gmail inbox list — plus a job description, screens each with a two-stage OpenAI pipeline, and writes ranked results to Google Sheets.\n\n**SETUP CHECKLIST**\n1. Create a Google Sheet with tabs `Candidates`, `Errors`, and `InboxResumes` (see docs/SETUP_GUIDE.md for exact columns)\n2. Replace `REPLACE_WITH_YOUR_GOOGLE_SHEET_ID` in every Google Sheets node\n3. Set up credentials: OpenAI API, Google Sheets OAuth2, Google Drive OAuth2 — replace the `REPLACE_WITH_YOUR_*_CRED_ID` placeholders\n4. Activate the workflow, copy the webhook's production URL into the frontend's `NEXT_PUBLIC_N8N_SUBMIT_WEBHOOK_URL`\n\nPDF only — DOCX resumes are rejected client-side. One bad resume never blocks the rest of the batch (see the error branches below). The Google Drive/Inbox branch is optional — if you're not using inbox sourcing, just leave `inboxResumeIds` empty from the frontend and that branch simply processes zero items.",
         "height": 300,
         "width": 480,
         "color": 4
@@ -288,6 +343,19 @@
         "height": 180,
         "width": 640,
         "color": 5
+      }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000024",
+      "name": "Sticky Note - Inbox Merge",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [220, 700],
+      "parameters": {
+        "content": "## INBOX-SOURCED RESUMES\n\nHR can select resumes that were already ingested from Gmail (see the separate Inbox Ingest workflow) instead of, or alongside, drag-dropping new PDFs. This branch looks up the requested `inboxResumeIds` in the `InboxResumes` sheet, downloads each one from Drive, and feeds it into `Merge Resume Sources` — from there it goes through the exact same extraction/scoring pipeline as an uploaded file, so there's no separate logic to maintain. If no inbox resumes were selected, this branch just produces zero items.",
+        "height": 200,
+        "width": 620,
+        "color": 7
       }
     },
     {
@@ -319,12 +387,33 @@
       "main": [
         [
           { "node": "Respond Ack", "type": "main", "index": 0 },
-          { "node": "Split Resume Files", "type": "main", "index": 0 }
+          { "node": "Split Resume Files", "type": "main", "index": 0 },
+          { "node": "Get Inbox Resumes Sheet", "type": "main", "index": 0 }
         ],
         [{ "node": "Respond Error", "type": "main", "index": 0 }]
       ]
     },
     "Split Resume Files": {
+      "main": [
+        [{ "node": "Merge Resume Sources", "type": "main", "index": 0 }]
+      ]
+    },
+    "Get Inbox Resumes Sheet": {
+      "main": [
+        [{ "node": "Match Selected Inbox Resumes", "type": "main", "index": 0 }]
+      ]
+    },
+    "Match Selected Inbox Resumes": {
+      "main": [
+        [{ "node": "Download Inbox Resume", "type": "main", "index": 0 }]
+      ]
+    },
+    "Download Inbox Resume": {
+      "main": [
+        [{ "node": "Merge Resume Sources", "type": "main", "index": 1 }]
+      ]
+    },
+    "Merge Resume Sources": {
       "main": [
         [{ "node": "Extract PDF Text", "type": "main", "index": 0 }]
       ]
