@@ -155,6 +155,16 @@ export default function Home() {
                   </>
                 )}
               </button>
+
+              {!canSubmit && !isSubmitting && (
+                <p className="text-center text-xs text-slate-400">
+                  {job.jobDescription.trim().length === 0
+                    ? "Add a job description to continue."
+                    : files.length + selectedInboxIds.length === 0
+                      ? "Select at least one resume — upload a PDF or pick from the inbox."
+                      : ""}
+                </p>
+              )}
             </div>
 
             {inboxEnabled && (
