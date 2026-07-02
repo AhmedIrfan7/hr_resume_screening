@@ -122,7 +122,75 @@
             "subject": "={{ $json.subject }}",
             "receivedAt": "={{ $json.receivedAt }}",
             "driveFileId": "={{ $json.driveFileId }}"
-          }
+          },
+          "schema": [
+            {
+              "id": "id",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "id",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fileName",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "fileName",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "senderEmail",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "senderEmail",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "senderName",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "senderName",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "subject",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "subject",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "receivedAt",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "receivedAt",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "driveFileId",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "driveFileId",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         },
         "options": {
           "cellFormat": "RAW"

@@ -6,7 +6,10 @@
       "name": "Submit Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
-      "position": [0, 0],
+      "position": [
+        0,
+        0
+      ],
       "webhookId": "hr-screening-submit",
       "parameters": {
         "httpMethod": "POST",
@@ -20,7 +23,10 @@
       "name": "Validate Payload",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [220, 0],
+      "position": [
+        220,
+        0
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const item = $input.first();\nconst body = (item.json && item.json.body) || item.json || {};\nconst binary = item.binary || {};\n\nconst batchId = (body.batchId || '').toString().trim();\nconst jobTitle = (body.jobTitle || '').toString().trim();\nconst jobDescription = (body.jobDescription || '').toString().trim();\nconst mustHaveSkills = (body.mustHaveSkills || '').toString().trim();\nconst niceToHaveSkills = (body.niceToHaveSkills || '').toString().trim();\n\nlet inboxResumeIds = [];\ntry {\n  const parsed = JSON.parse(body.inboxResumeIds || '[]');\n  if (Array.isArray(parsed)) {\n    inboxResumeIds = parsed.map((id) => (id || '').toString().trim()).filter(Boolean);\n  }\n} catch (e) {\n  inboxResumeIds = [];\n}\n\nconst fileKeys = Object.keys(binary).filter((k) => k.toLowerCase().startsWith('files'));\nconst totalFiles = fileKeys.length + inboxResumeIds.length;\n\nconst errors = [];\nif (!batchId) errors.push('Missing batchId');\nif (!jobDescription) errors.push('Missing jobDescription');\nif (totalFiles === 0) errors.push('No resumes selected — upload files or pick from the inbox list');\n\nconst nonPdf = fileKeys.filter((k) => {\n  const mime = (binary[k].mimeType || '').toLowerCase();\n  return mime !== 'application/pdf';\n});\nif (nonPdf.length > 0) errors.push('Only PDF resumes are supported (' + nonPdf.length + ' non-PDF file(s) rejected)');\n\nreturn [{\n  json: {\n    isValid: errors.length === 0,\n    validationError: errors.join('; '),\n    batchId,\n    jobTitle,\n    jobDescription,\n    mustHaveSkills,\n    niceToHaveSkills,\n    inboxResumeIds,\n    totalFiles\n  },\n  binary\n}];"
@@ -31,16 +37,27 @@
       "name": "Is Valid?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [440, 0],
+      "position": [
+        440,
+        0
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "id": "cond-valid",
               "leftValue": "={{ $json.isValid }}",
               "rightValue": "",
-              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
             }
           ],
           "combinator": "and"
@@ -53,11 +70,16 @@
       "name": "Respond Ack",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
-      "position": [660, -140],
+      "position": [
+        660,
+        -140
+      ],
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ { batchId: $json.batchId, totalFiles: $json.totalFiles, status: \"queued\" } }}",
-        "options": { "responseCode": 200 }
+        "options": {
+          "responseCode": 200
+        }
       }
     },
     {
@@ -65,11 +87,16 @@
       "name": "Respond Error",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.4,
-      "position": [660, 200],
+      "position": [
+        660,
+        200
+      ],
       "parameters": {
         "respondWith": "json",
         "responseBody": "={{ { error: $json.validationError } }}",
-        "options": { "responseCode": 400 }
+        "options": {
+          "responseCode": 400
+        }
       }
     },
     {
@@ -77,7 +104,10 @@
       "name": "Split Resume Files",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [660, 40],
+      "position": [
+        660,
+        40
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const binary = item.binary || {};\n  const fileKeys = Object.keys(binary).filter((k) => k.toLowerCase().startsWith('files'));\n\n  for (const key of fileKeys) {\n    const bin = binary[key];\n    results.push({\n      json: {\n        batchId: item.json.batchId,\n        jobTitle: item.json.jobTitle,\n        jobDescription: item.json.jobDescription,\n        mustHaveSkills: item.json.mustHaveSkills,\n        niceToHaveSkills: item.json.niceToHaveSkills,\n        totalFiles: item.json.totalFiles,\n        fileName: bin.fileName || key\n      },\n      binary: { data: bin }\n    });\n  }\n}\n\nreturn results;"
@@ -88,16 +118,30 @@
       "name": "Get Inbox Resumes Sheet",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
-      "position": [220, 560],
+      "position": [
+        220,
+        560
+      ],
       "onError": "continueRegularOutput",
       "parameters": {
         "operation": "read",
-        "documentId": { "__rl": true, "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID", "mode": "id" },
-        "sheetName": { "__rl": true, "value": "InboxResumes", "mode": "name" },
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "InboxResumes",
+          "mode": "name"
+        },
         "options": {}
       },
       "credentials": {
-        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Sheets account" }
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
@@ -105,7 +149,10 @@
       "name": "Match Selected Inbox Resumes",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [440, 560],
+      "position": [
+        440,
+        560
+      ],
       "parameters": {
         "mode": "runOnceForAllItems",
         "jsCode": "const meta = $('Validate Payload').first().json;\nconst ids = new Set(meta.inboxResumeIds || []);\nif (ids.size === 0) return [];\n\nconst rows = $input.all().map((item) => item.json);\n\nreturn rows\n  .filter((row) => ids.has((row.id || '').toString().trim()))\n  .map((row) => ({\n    json: {\n      batchId: meta.batchId,\n      jobTitle: meta.jobTitle,\n      jobDescription: meta.jobDescription,\n      mustHaveSkills: meta.mustHaveSkills,\n      niceToHaveSkills: meta.niceToHaveSkills,\n      totalFiles: meta.totalFiles,\n      fileName: row.fileName || row.id,\n      driveFileId: row.driveFileId\n    }\n  }));"
@@ -116,15 +163,25 @@
       "name": "Download Inbox Resume",
       "type": "n8n-nodes-base.googleDrive",
       "typeVersion": 3,
-      "position": [660, 560],
+      "position": [
+        660,
+        560
+      ],
       "onError": "continueRegularOutput",
       "parameters": {
         "operation": "download",
-        "fileId": { "__rl": true, "value": "={{ $json.driveFileId }}", "mode": "id" },
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.driveFileId }}",
+          "mode": "id"
+        },
         "options": {}
       },
       "credentials": {
-        "googleDriveOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Drive account" }
+        "googleDriveOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID",
+          "name": "Google Drive account"
+        }
       }
     },
     {
@@ -132,7 +189,10 @@
       "name": "Merge Resume Sources",
       "type": "n8n-nodes-base.merge",
       "typeVersion": 3,
-      "position": [900, 260],
+      "position": [
+        900,
+        260
+      ],
       "parameters": {
         "mode": "append",
         "numberInputs": 2
@@ -143,7 +203,10 @@
       "name": "Extract PDF Text",
       "type": "n8n-nodes-base.extractFromFile",
       "typeVersion": 1,
-      "position": [880, 40],
+      "position": [
+        880,
+        40
+      ],
       "onError": "continueErrorOutput",
       "parameters": {
         "operation": "pdf",
@@ -156,16 +219,26 @@
       "name": "Has Text?",
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
-      "position": [1100, -60],
+      "position": [
+        1100,
+        -60
+      ],
       "parameters": {
         "conditions": {
-          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
           "conditions": [
             {
               "id": "cond-has-text",
               "leftValue": "={{ ($json.text || '').trim().length }}",
               "rightValue": 20,
-              "operator": { "type": "number", "operation": "gt" }
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
             }
           ],
           "combinator": "and"
@@ -178,7 +251,10 @@
       "name": "Prepare Error Log",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1100, 220],
+      "position": [
+        1100,
+        220
+      ],
       "parameters": {
         "mode": "runOnceForEachItem",
         "jsCode": "// n8n's continueErrorOutput items don't reliably carry a `text` field, so its\n// absence (vs. present-but-short) is how we tell \"extraction failed\" apart from\n// \"extracted fine but the PDF had no real text (e.g. a scanned image)\".\nconst source = $('Merge Resume Sources').item.json;\nconst hasTextField = Object.prototype.hasOwnProperty.call($json, 'text');\n\nlet errorMessage;\nif (!hasTextField) {\n  errorMessage = 'PDF extraction failed' + ($json.error && $json.error.message ? ': ' + $json.error.message : '');\n} else {\n  errorMessage = 'No extractable text found (resume may be a scanned image PDF)';\n}\n\nreturn {\n  json: {\n    batchId: source.batchId,\n    fileName: source.fileName,\n    errorMessage,\n    occurredAt: new Date().toISOString()\n  }\n};"
@@ -189,13 +265,26 @@
       "name": "OpenAI Chat Model",
       "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
       "typeVersion": 1.2,
-      "position": [1320, -280],
+      "position": [
+        1320,
+        -280
+      ],
       "parameters": {
-        "model": { "__rl": true, "value": "gpt-4o-mini", "mode": "list", "cachedResultName": "gpt-4o-mini" },
-        "options": { "temperature": 0.1 }
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-mini",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-mini"
+        },
+        "options": {
+          "temperature": 0.1
+        }
       },
       "credentials": {
-        "openAiApi": { "id": "REPLACE_WITH_YOUR_OPENAI_CRED_ID", "name": "OpenAI account" }
+        "openAiApi": {
+          "id": "REPLACE_WITH_YOUR_OPENAI_CRED_ID",
+          "name": "OpenAI account"
+        }
       }
     },
     {
@@ -203,7 +292,10 @@
       "name": "Extract Candidate Profile",
       "type": "@n8n/n8n-nodes-langchain.informationExtractor",
       "typeVersion": 1.1,
-      "position": [1320, -60],
+      "position": [
+        1320,
+        -60
+      ],
       "parameters": {
         "text": "={{ $json.text }}",
         "schemaType": "manual",
@@ -218,7 +310,10 @@
       "name": "Prepare Scoring Input",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1540, -60],
+      "position": [
+        1540,
+        -60
+      ],
       "parameters": {
         "mode": "runOnceForEachItem",
         "jsCode": "const meta = $('Merge Resume Sources').item.json;\nconst profile = $json.output || $json;\n\nconst rubric = `Score this candidate for the role below using this weighted rubric (integers, must sum to the max for each category):\n- Skills Match (0-30): overlap between candidate skills and must-have/nice-to-have skills\n- Experience Relevance (0-25): relevance and seniority of past roles vs this job\n- Achievements & Impact (0-20): concrete, measurable accomplishments\n- Education & Certifications (0-10): relevance of degrees/certifications\n- Resume Clarity (0-15): how clearly the resume communicates the above\n\nOverall score = sum of the five category scores (0-100).`;\n\nconst scoringText = `JOB TITLE: ${meta.jobTitle || 'Not specified'}\nJOB DESCRIPTION:\n${meta.jobDescription}\n\nMUST-HAVE SKILLS: ${meta.mustHaveSkills || 'Not specified'}\nNICE-TO-HAVE SKILLS: ${meta.niceToHaveSkills || 'Not specified'}\n\n${rubric}\n\nCANDIDATE PROFILE (already extracted from resume):\n${JSON.stringify(profile)}`;\n\nreturn {\n  json: {\n    ...meta,\n    profile,\n    scoringText\n  }\n};"
@@ -229,7 +324,10 @@
       "name": "Score Candidate",
       "type": "@n8n/n8n-nodes-langchain.informationExtractor",
       "typeVersion": 1.1,
-      "position": [1760, -60],
+      "position": [
+        1760,
+        -60
+      ],
       "parameters": {
         "text": "={{ $json.scoringText }}",
         "schemaType": "manual",
@@ -244,7 +342,10 @@
       "name": "Assemble Candidate Row",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
-      "position": [1980, -60],
+      "position": [
+        1980,
+        -60
+      ],
       "parameters": {
         "mode": "runOnceForEachItem",
         "jsCode": "const meta = $('Merge Resume Sources').item.json;\nconst profile = $('Extract Candidate Profile').item.json.output || $('Extract Candidate Profile').item.json;\nconst score = $json.output || $json;\n\nreturn {\n  json: {\n    batchId: meta.batchId,\n    fileName: meta.fileName,\n    candidateName: profile.candidateName || '',\n    email: profile.email || '',\n    phone: profile.phone || '',\n    yearsExperience: profile.yearsExperience || '',\n    skills: Array.isArray(profile.skills) ? profile.skills.join(', ') : (profile.skills || ''),\n    education: profile.education || '',\n    certifications: Array.isArray(profile.certifications) ? profile.certifications.join(', ') : (profile.certifications || ''),\n    summary: profile.summary || '',\n    score: score.score || 0,\n    classification: score.classification || '',\n    skillMatchScore: score.skillMatchScore || 0,\n    experienceScore: score.experienceScore || 0,\n    achievementScore: score.achievementScore || 0,\n    educationScore: score.educationScore || 0,\n    clarityScore: score.clarityScore || 0,\n    strengths: Array.isArray(score.strengths) ? score.strengths.join('; ') : (score.strengths || ''),\n    gaps: Array.isArray(score.gaps) ? score.gaps.join('; ') : (score.gaps || ''),\n    recommendation: score.recommendation || '',\n    processedAt: new Date().toISOString()\n  }\n};"
@@ -255,12 +356,23 @@
       "name": "Save Candidate to Sheet",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
-      "position": [2200, -60],
+      "position": [
+        2200,
+        -60
+      ],
       "onError": "continueRegularOutput",
       "parameters": {
         "operation": "append",
-        "documentId": { "__rl": true, "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID", "mode": "id" },
-        "sheetName": { "__rl": true, "value": "Candidates", "mode": "name" },
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Candidates",
+          "mode": "name"
+        },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
@@ -285,12 +397,211 @@
             "gaps": "={{ $json.gaps }}",
             "recommendation": "={{ $json.recommendation }}",
             "processedAt": "={{ $json.processedAt }}"
-          }
+          },
+          "schema": [
+            {
+              "id": "batchId",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "batchId",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fileName",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "fileName",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "candidateName",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "candidateName",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "email",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "phone",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "phone",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "yearsExperience",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "yearsExperience",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "skills",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "skills",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "education",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "education",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "certifications",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "certifications",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "summary",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "score",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "score",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "classification",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "classification",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "skillMatchScore",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "skillMatchScore",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "experienceScore",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "experienceScore",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "achievementScore",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "achievementScore",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "educationScore",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "educationScore",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "clarityScore",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "clarityScore",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "strengths",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "strengths",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "gaps",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "gaps",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "recommendation",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "recommendation",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "processedAt",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "processedAt",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         },
-        "options": { "cellFormat": "RAW" }
+        "options": {
+          "cellFormat": "RAW"
+        }
       },
       "credentials": {
-        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Sheets account" }
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
@@ -298,12 +609,23 @@
       "name": "Log Error to Sheet",
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.5,
-      "position": [1320, 220],
+      "position": [
+        1320,
+        220
+      ],
       "onError": "continueRegularOutput",
       "parameters": {
         "operation": "append",
-        "documentId": { "__rl": true, "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID", "mode": "id" },
-        "sheetName": { "__rl": true, "value": "Errors", "mode": "name" },
+        "documentId": {
+          "__rl": true,
+          "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID",
+          "mode": "id"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "Errors",
+          "mode": "name"
+        },
         "columns": {
           "mappingMode": "defineBelow",
           "value": {
@@ -311,12 +633,58 @@
             "fileName": "={{ $json.fileName }}",
             "errorMessage": "={{ $json.errorMessage }}",
             "occurredAt": "={{ $json.occurredAt }}"
-          }
+          },
+          "schema": [
+            {
+              "id": "batchId",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "batchId",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "fileName",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "fileName",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "errorMessage",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "errorMessage",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "occurredAt",
+              "type": "string",
+              "display": true,
+              "required": false,
+              "displayName": "occurredAt",
+              "defaultMatch": false,
+              "canBeUsedToMatch": true
+            }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
         },
-        "options": { "cellFormat": "RAW" }
+        "options": {
+          "cellFormat": "RAW"
+        }
       },
       "credentials": {
-        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Sheets account" }
+        "googleSheetsOAuth2Api": {
+          "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID",
+          "name": "Google Sheets account"
+        }
       }
     },
     {
@@ -324,7 +692,10 @@
       "name": "Sticky Note - Overview",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [-20, -420],
+      "position": [
+        -20,
+        -420
+      ],
       "parameters": {
         "content": "## RESUMEIQ — SUBMIT WORKFLOW\n\nReceives a batch of resumes from the frontend — drag-dropped uploads and/or resumes selected from the Gmail inbox list — plus a job description, screens each with a two-stage OpenAI pipeline, and writes ranked results to Google Sheets.\n\n**SETUP CHECKLIST**\n1. Create a Google Sheet with tabs `Candidates`, `Errors`, and `InboxResumes` (see docs/SETUP_GUIDE.md for exact columns)\n2. Replace `REPLACE_WITH_YOUR_GOOGLE_SHEET_ID` in every Google Sheets node\n3. Set up credentials: OpenAI API, Google Sheets OAuth2, Google Drive OAuth2 — replace the `REPLACE_WITH_YOUR_*_CRED_ID` placeholders\n4. Activate the workflow, copy the webhook's production URL into the frontend's `NEXT_PUBLIC_N8N_SUBMIT_WEBHOOK_URL`\n\nPDF only — DOCX resumes are rejected client-side. One bad resume never blocks the rest of the batch (see the error branches below). The Google Drive/Inbox branch is optional — if you're not using inbox sourcing, just leave `inboxResumeIds` empty from the frontend and that branch simply processes zero items.",
         "height": 300,
@@ -337,7 +708,10 @@
       "name": "Sticky Note - Intake",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [0, 320],
+      "position": [
+        0,
+        320
+      ],
       "parameters": {
         "content": "## INTAKE & VALIDATION\n\nWebhook responds immediately (batchId + totalFiles) so the frontend never blocks on the AI pipeline. Invalid batches (no job description, no files, non-PDF uploads) are rejected with a 400 before any AI spend happens.",
         "height": 180,
@@ -350,7 +724,10 @@
       "name": "Sticky Note - Inbox Merge",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [220, 700],
+      "position": [
+        220,
+        700
+      ],
       "parameters": {
         "content": "## INBOX-SOURCED RESUMES\n\nHR can select resumes that were already ingested from Gmail (see the separate Inbox Ingest workflow) instead of, or alongside, drag-dropping new PDFs. This branch looks up the requested `inboxResumeIds` in the `InboxResumes` sheet, downloads each one from Drive, and feeds it into `Merge Resume Sources` — from there it goes through the exact same extraction/scoring pipeline as an uploaded file, so there's no separate logic to maintain. If no inbox resumes were selected, this branch just produces zero items.",
         "height": 200,
@@ -363,7 +740,10 @@
       "name": "Sticky Note - AI Pipeline",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
-      "position": [1280, -460],
+      "position": [
+        1280,
+        -460
+      ],
       "parameters": {
         "content": "## TWO-STAGE AI SCREENING\n\nStage 1 extracts a structured candidate profile from resume text. Stage 2 scores that profile against the job description using a weighted rubric (Skills 30 / Experience 25 / Achievements 20 / Education 10 / Clarity 15). Keeping extraction and scoring as separate prompts keeps each one focused and more accurate than one combined mega-prompt.",
         "height": 160,
@@ -375,92 +755,214 @@
   "connections": {
     "Submit Webhook": {
       "main": [
-        [{ "node": "Validate Payload", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Validate Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Validate Payload": {
       "main": [
-        [{ "node": "Is Valid?", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Is Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Is Valid?": {
       "main": [
         [
-          { "node": "Respond Ack", "type": "main", "index": 0 },
-          { "node": "Split Resume Files", "type": "main", "index": 0 },
-          { "node": "Get Inbox Resumes Sheet", "type": "main", "index": 0 }
+          {
+            "node": "Respond Ack",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Split Resume Files",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Get Inbox Resumes Sheet",
+            "type": "main",
+            "index": 0
+          }
         ],
-        [{ "node": "Respond Error", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Respond Error",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Split Resume Files": {
       "main": [
-        [{ "node": "Merge Resume Sources", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Merge Resume Sources",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Get Inbox Resumes Sheet": {
       "main": [
-        [{ "node": "Match Selected Inbox Resumes", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Match Selected Inbox Resumes",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Match Selected Inbox Resumes": {
       "main": [
-        [{ "node": "Download Inbox Resume", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Download Inbox Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Download Inbox Resume": {
       "main": [
-        [{ "node": "Merge Resume Sources", "type": "main", "index": 1 }]
+        [
+          {
+            "node": "Merge Resume Sources",
+            "type": "main",
+            "index": 1
+          }
+        ]
       ]
     },
     "Merge Resume Sources": {
       "main": [
-        [{ "node": "Extract PDF Text", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Extract PDF Text",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Extract PDF Text": {
       "main": [
-        [{ "node": "Has Text?", "type": "main", "index": 0 }],
-        [{ "node": "Prepare Error Log", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Has Text?",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Error Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Has Text?": {
       "main": [
-        [{ "node": "Extract Candidate Profile", "type": "main", "index": 0 }],
-        [{ "node": "Prepare Error Log", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Extract Candidate Profile",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Prepare Error Log",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "OpenAI Chat Model": {
       "ai_languageModel": [
         [
-          { "node": "Extract Candidate Profile", "type": "ai_languageModel", "index": 0 },
-          { "node": "Score Candidate", "type": "ai_languageModel", "index": 0 }
+          {
+            "node": "Extract Candidate Profile",
+            "type": "ai_languageModel",
+            "index": 0
+          },
+          {
+            "node": "Score Candidate",
+            "type": "ai_languageModel",
+            "index": 0
+          }
         ]
       ]
     },
     "Extract Candidate Profile": {
       "main": [
-        [{ "node": "Prepare Scoring Input", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Prepare Scoring Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Prepare Scoring Input": {
       "main": [
-        [{ "node": "Score Candidate", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Score Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Score Candidate": {
       "main": [
-        [{ "node": "Assemble Candidate Row", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Assemble Candidate Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Assemble Candidate Row": {
       "main": [
-        [{ "node": "Save Candidate to Sheet", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Save Candidate to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     },
     "Prepare Error Log": {
       "main": [
-        [{ "node": "Log Error to Sheet", "type": "main", "index": 0 }]
+        [
+          {
+            "node": "Log Error to Sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
       ]
     }
   },
