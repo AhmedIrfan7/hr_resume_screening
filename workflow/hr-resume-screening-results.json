@@ -1,0 +1,23 @@
+{
+  "name": "HR Resume Screening — Results",
+  "nodes": [],
+  "connections": {},
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "versionId": "hr-resume-screening-results-v1",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "resumeiq-hr-resume-screening"
+  },
+  "tags": [
+    {
+      "name": "resumeiq",
+      "createdAt": "2026-07-02T00:00:00.000Z",
+      "updatedAt": "2026-07-02T00:00:00.000Z"
+    }
+  ]
+}
