@@ -3,6 +3,9 @@
   "private": true,
   "description": "AI-powered HR resume screening — n8n automation + Next.js frontend.",
   "scripts": {
-    "validate:workflows": "node scripts/validate-workflows.js"
+    "validate:workflows": "node scripts/validate-workflows.js",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "build:frontend": "npm --prefix frontend run build",
+    "lint:frontend": "npm --prefix frontend run lint"
   }
 }
