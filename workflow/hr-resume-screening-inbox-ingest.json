@@ -20,7 +20,6 @@
         },
         "simple": false,
         "filters": {
-          "q": "has:attachment filename:pdf",
           "readStatus": "both"
         },
         "options": {
@@ -146,7 +145,7 @@
         -300
       ],
       "parameters": {
-        "content": "## RESUMEIQ — INBOX INGEST WORKFLOW\n\nPolls HR's Gmail inbox for new emails with PDF attachments, uploads each PDF to Google Drive, and logs it to the `InboxResumes` sheet tab so it shows up as a selectable resume in the ResumeIQ frontend.\n\n**SETUP CHECKLIST**\n1. Set up a Gmail OAuth2 credential, replace `REPLACE_WITH_YOUR_GMAIL_CRED_ID`\n2. Create (or reuse) a Google Drive folder to store inbox resumes in, replace `REPLACE_WITH_YOUR_INBOX_DRIVE_FOLDER_ID`\n3. Replace `REPLACE_WITH_YOUR_GOOGLE_SHEET_ID` and the Google Drive/Sheets credential placeholders\n4. Make sure the `InboxResumes` tab exists with the right headers (see docs/SETUP_GUIDE.md)\n5. Activate this workflow — non-PDF attachments and non-matching emails are silently skipped, not errors",
+        "content": "## RESUMEIQ — INBOX INGEST WORKFLOW\n\nPolls HR's Gmail inbox for new emails, uploads any PDF attachments to Google Drive, and logs each to the `InboxResumes` sheet tab so it shows up as a selectable resume in the ResumeIQ frontend.\n\n**HOW FILTERING WORKS:** The Gmail Trigger deliberately has NO search query — it catches every new email, then the `Filter PDF Attachments` code node keeps only PDF attachments (by MIME type / .pdf filename). Filtering in code rather than via a Gmail `q:` query avoids the Gmail API's flaky `filename:` search operator, which can silently drop matching emails.\n\n**SETUP CHECKLIST**\n1. Set up a Gmail OAuth2 credential, replace `REPLACE_WITH_YOUR_GMAIL_CRED_ID`\n2. On the Gmail Trigger node, make sure Options → **Download Attachments** is ON (otherwise the PDF binary is never fetched)\n3. Create (or reuse) a Google Drive folder to store inbox resumes in, replace `REPLACE_WITH_YOUR_INBOX_DRIVE_FOLDER_ID`\n4. Replace `REPLACE_WITH_YOUR_GOOGLE_SHEET_ID` and the Google Drive/Sheets credential placeholders\n5. Make sure the `InboxResumes` tab exists with the right headers (see docs/SETUP_GUIDE.md)\n6. Activate this workflow — emails without a PDF attachment are silently skipped, not errors",
         "height": 260,
         "width": 480,
         "color": 4
