@@ -8,9 +8,30 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
+const title = "ResumeIQ — AI Resume Screening";
+const description =
+  "Upload a job description and a stack of resumes. Get back a ranked, explainable shortlist in seconds.";
+
 export const metadata: Metadata = {
-  title: "ResumeIQ — AI Resume Screening",
-  description: "Upload a job description and resumes, get a ranked shortlist in seconds.",
+  title,
+  description,
+  keywords: ["resume screening", "HR automation", "AI recruiting", "candidate ranking"],
+  icons: {
+    icon: "/favicon.ico",
+  },
+  openGraph: {
+    title,
+    description,
+    type: "website",
+  },
+  robots: {
+    index: false,
+    follow: false,
+  },
+};
+
+export const viewport = {
+  themeColor: "#4f46e5",
 };
 
 export default function RootLayout({
