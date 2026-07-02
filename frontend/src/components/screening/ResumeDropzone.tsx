@@ -73,7 +73,7 @@ export function ResumeDropzone({ files, onChange }: ResumeDropzoneProps) {
           setIsDragActive(false);
           if (e.dataTransfer.files.length > 0) addFiles(e.dataTransfer.files);
         }}
-        className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors ${
+        className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-10 text-center transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 ${
           isDragActive ? "border-brand-500 bg-brand-50" : "border-slate-300 bg-slate-50"
         }`}
       >
@@ -114,7 +114,8 @@ export function ResumeDropzone({ files, onChange }: ResumeDropzoneProps) {
               <button
                 type="button"
                 onClick={() => removeFile(file.name)}
-                className="ml-3 text-xs font-medium text-slate-400 hover:text-red-600"
+                aria-label={`Remove ${file.name}`}
+                className="ml-3 rounded text-xs font-medium text-slate-400 hover:text-red-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
               >
                 Remove
               </button>

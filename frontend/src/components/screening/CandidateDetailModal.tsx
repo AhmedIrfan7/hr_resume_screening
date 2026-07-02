@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { classificationClass } from "@/lib/candidateStyles";
 import type { Candidate } from "@/lib/types";
 
@@ -38,7 +38,11 @@ function bulletList(text: string): string[] {
 }
 
 export function CandidateDetailModal({ candidate, onClose }: CandidateDetailModalProps) {
+  const closeButtonRef = useRef<HTMLButtonElement>(null);
+
   useEffect(() => {
+    closeButtonRef.current?.focus();
+
     function onKeyDown(e: KeyboardEvent) {
       if (e.key === "Escape") onClose();
     }
@@ -68,10 +72,11 @@ export function CandidateDetailModal({ candidate, onClose }: CandidateDetailModa
             </p>
           </div>
           <button
+            ref={closeButtonRef}
             type="button"
             onClick={onClose}
             aria-label="Close candidate details"
-            className="rounded-md px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="rounded-md px-2 py-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           >
             ✕
           </button>

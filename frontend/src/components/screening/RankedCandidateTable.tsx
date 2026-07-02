@@ -8,7 +8,7 @@ interface RankedCandidateTableProps {
 
 export function RankedCandidateTable({ candidates, onSelect }: RankedCandidateTableProps) {
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+    <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
       <table className="min-w-full divide-y divide-slate-200 text-sm">
         <thead className="bg-slate-50">
           <tr>
@@ -59,7 +59,8 @@ export function RankedCandidateTable({ candidates, onSelect }: RankedCandidateTa
                 <button
                   type="button"
                   onClick={() => onSelect(candidate)}
-                  className="text-sm font-medium text-brand-600 hover:text-brand-700"
+                  aria-label={`View details for ${candidate.candidateName || candidate.fileName}`}
+                  className="rounded text-sm font-medium text-brand-600 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                 >
                   View
                 </button>

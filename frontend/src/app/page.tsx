@@ -92,7 +92,7 @@ export default function Home() {
   }
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10">
+    <main className="mx-auto max-w-5xl px-4 py-8 sm:px-6 sm:py-10">
       {state === "idle" && (
         <section aria-label="Job details and resume upload" className="space-y-6">
           <JobDescriptionForm value={job} onChange={setJob} />
@@ -108,7 +108,7 @@ export default function Home() {
             type="button"
             disabled={!canSubmit}
             onClick={handleSubmit}
-            className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+            className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-slate-300"
           >
             {isSubmitting ? "Submitting..." : "Start screening"}
           </button>
@@ -131,7 +131,7 @@ export default function Home() {
             <button
               type="button"
               onClick={() => setState("results")}
-              className="mx-auto block text-sm font-medium text-brand-600 hover:text-brand-700"
+              className="mx-auto block rounded text-sm font-medium text-brand-600 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
             >
               View partial results ({poll.processedCount} ready)
             </button>
@@ -141,7 +141,7 @@ export default function Home() {
 
       {state === "results" && (
         <section aria-label="Ranked candidates">
-          <div className="mb-6 flex items-center justify-between">
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <h2 className="text-xl font-semibold text-slate-900">
               {job.jobTitle ? `Results for ${job.jobTitle}` : "Results"}
             </h2>
@@ -150,7 +150,7 @@ export default function Home() {
                 <button
                   type="button"
                   onClick={handleExportCsv}
-                  className="text-sm font-medium text-slate-600 hover:text-slate-900"
+                  className="rounded text-sm font-medium text-slate-600 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
                 >
                   Export CSV
                 </button>
@@ -158,7 +158,7 @@ export default function Home() {
               <button
                 type="button"
                 onClick={handleReset}
-                className="text-sm font-medium text-brand-600 hover:text-brand-700"
+                className="rounded text-sm font-medium text-brand-600 hover:text-brand-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
               >
                 Start new screening
               </button>
