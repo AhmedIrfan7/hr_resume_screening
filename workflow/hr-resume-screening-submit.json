@@ -194,6 +194,49 @@
         "mode": "runOnceForEachItem",
         "jsCode": "const meta = $('Split Resume Files').item.json;\nconst profile = $('Extract Candidate Profile').item.json.output || $('Extract Candidate Profile').item.json;\nconst score = $json.output || $json;\n\nreturn {\n  json: {\n    batchId: meta.batchId,\n    fileName: meta.fileName,\n    candidateName: profile.candidateName || '',\n    email: profile.email || '',\n    phone: profile.phone || '',\n    yearsExperience: profile.yearsExperience || '',\n    skills: Array.isArray(profile.skills) ? profile.skills.join(', ') : (profile.skills || ''),\n    education: profile.education || '',\n    certifications: Array.isArray(profile.certifications) ? profile.certifications.join(', ') : (profile.certifications || ''),\n    summary: profile.summary || '',\n    score: score.score || 0,\n    classification: score.classification || '',\n    skillMatchScore: score.skillMatchScore || 0,\n    experienceScore: score.experienceScore || 0,\n    achievementScore: score.achievementScore || 0,\n    educationScore: score.educationScore || 0,\n    clarityScore: score.clarityScore || 0,\n    strengths: Array.isArray(score.strengths) ? score.strengths.join('; ') : (score.strengths || ''),\n    gaps: Array.isArray(score.gaps) ? score.gaps.join('; ') : (score.gaps || ''),\n    recommendation: score.recommendation || '',\n    processedAt: new Date().toISOString()\n  }\n};"
       }
+    },
+    {
+      "id": "b1000001-0000-0000-0000-000000000015",
+      "name": "Save Candidate to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [2200, -60],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "Candidates", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "batchId": "={{ $json.batchId }}",
+            "fileName": "={{ $json.fileName }}",
+            "candidateName": "={{ $json.candidateName }}",
+            "email": "={{ $json.email }}",
+            "phone": "={{ $json.phone }}",
+            "yearsExperience": "={{ $json.yearsExperience }}",
+            "skills": "={{ $json.skills }}",
+            "education": "={{ $json.education }}",
+            "certifications": "={{ $json.certifications }}",
+            "summary": "={{ $json.summary }}",
+            "score": "={{ $json.score }}",
+            "classification": "={{ $json.classification }}",
+            "skillMatchScore": "={{ $json.skillMatchScore }}",
+            "experienceScore": "={{ $json.experienceScore }}",
+            "achievementScore": "={{ $json.achievementScore }}",
+            "educationScore": "={{ $json.educationScore }}",
+            "clarityScore": "={{ $json.clarityScore }}",
+            "strengths": "={{ $json.strengths }}",
+            "gaps": "={{ $json.gaps }}",
+            "recommendation": "={{ $json.recommendation }}",
+            "processedAt": "={{ $json.processedAt }}"
+          }
+        },
+        "options": {}
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Sheets account" }
+      }
     }
   ],
   "connections": {
@@ -254,6 +297,11 @@
     "Score Candidate": {
       "main": [
         [{ "node": "Assemble Candidate Row", "type": "main", "index": 0 }]
+      ]
+    },
+    "Assemble Candidate Row": {
+      "main": [
+        [{ "node": "Save Candidate to Sheet", "type": "main", "index": 0 }]
       ]
     }
   },
