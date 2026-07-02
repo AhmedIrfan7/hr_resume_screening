@@ -103,3 +103,31 @@ See [`vercel.json`](../frontend/vercel.json) for build settings pinned in the re
 | Results never complete (stuck at 0 / N) | Workflow may have failed before writing to the sheet — check the `Errors` tab in your Google Sheet, and check the n8n execution log for the submit workflow |
 | "Only PDF resumes are supported" for a real PDF | Some scanners/exports mislabel the MIME type — try re-saving the PDF from a browser's print-to-PDF |
 | Google Sheets node errors in n8n | Re-check the Sheet ID and that the tab names are exactly `Candidates` and `Errors` (case-sensitive) |
+| "From inbox" panel never shows up | `NEXT_PUBLIC_N8N_INBOX_WEBHOOK_URL` isn't set — the panel is hidden on purpose until you set it (see [section 10](#10-optional-gmail-inbox-resume-sourcing)) |
+| Inbox list is empty even though emails arrived | The Inbox Ingest workflow polls every minute — give it a minute, then check its execution log; also confirm it's **Active**, not just saved |
+
+## 10. Optional: Gmail inbox resume sourcing
+
+Lets HR select resumes that arrived as Gmail attachments, alongside (not instead of) drag-and-drop uploads. Skip this whole section if you don't need it — everything else works fine without it.
+
+1. Add the `InboxResumes` tab to your Google Sheet if you haven't already (step 2.4 above).
+2. Create (or pick an existing) Google Drive folder to store inbox resume PDFs in. Copy its folder ID from the URL — same trick as the Sheet ID: `https://drive.google.com/drive/folders/`**`THIS_PART_IS_THE_ID`**.
+3. In n8n, add credentials:
+   - **Gmail OAuth2 API** — connect the Gmail account HR receives resumes at.
+   - **Google Drive OAuth2 API** — can reuse the same Google account as your Sheets credential.
+4. Import both workflows: [`workflow/hr-resume-screening-inbox-ingest.json`](../workflow/hr-resume-screening-inbox-ingest.json) and [`workflow/hr-resume-screening-inbox-list.json`](../workflow/hr-resume-screening-inbox-list.json).
+5. Replace placeholders in **both**:
+   - `REPLACE_WITH_YOUR_GOOGLE_SHEET_ID` → your Sheet ID.
+   - `REPLACE_WITH_YOUR_INBOX_DRIVE_FOLDER_ID` (Inbox Ingest only) → your Drive folder ID from step 2.
+   - The `Gmail account` / `Google Drive account` / `Google Sheets account` credential dropdowns → the credentials from step 3.
+6. Also update the **submit** workflow: open the `Get Inbox Resumes Sheet` and `Download Inbox Resume` nodes and set their Sheet ID / Google Drive credential the same way (these two nodes exist even if you skip this whole section — they just process zero items when no inbox resumes are selected).
+7. **Activate** both new workflows.
+8. Open the **Inbox List Webhook** node in the Inbox List workflow, copy its Production URL, and add it to `.env.local` (and Vercel, if deployed):
+
+   ```
+   NEXT_PUBLIC_N8N_INBOX_WEBHOOK_URL=<inbox list webhook production URL>
+   ```
+
+9. Reload the frontend — a "From inbox" panel should now appear next to the job description form once the Inbox Ingest workflow has picked up at least one PDF (it polls every minute; new attachments are skipped if they're not PDFs, silently).
+
+By default, the Gmail trigger searches `has:attachment filename:pdf` across the whole inbox. To scope it to a specific label or sender, edit the `q` value in the **Gmail Trigger** node's Filters — it accepts the same search syntax as the Gmail search box.
