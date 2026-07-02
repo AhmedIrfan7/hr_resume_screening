@@ -232,7 +232,7 @@
             "processedAt": "={{ $json.processedAt }}"
           }
         },
-        "options": {}
+        "options": { "cellFormat": "RAW" }
       },
       "credentials": {
         "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Sheets account" }
@@ -258,7 +258,7 @@
             "occurredAt": "={{ $json.occurredAt }}"
           }
         },
-        "options": {}
+        "options": { "cellFormat": "RAW" }
       },
       "credentials": {
         "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Sheets account" }
