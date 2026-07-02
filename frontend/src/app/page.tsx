@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { JobDescriptionForm } from "@/components/screening/JobDescriptionForm";
 import { ResumeDropzone } from "@/components/screening/ResumeDropzone";
+import { generateBatchId, submitBatch } from "@/lib/api";
 import type { Candidate, JobDetails } from "@/lib/types";
 
 type ScreeningState = "idle" | "processing" | "results";
@@ -26,12 +27,38 @@ export default function Home() {
   const [job, setJob] = useState<JobDetails>(EMPTY_JOB);
   const [files, setFiles] = useState<File[]>([]);
   const [batch, setBatch] = useState<BatchState | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
+  const canSubmit = job.jobDescription.trim().length > 0 && files.length > 0 && !isSubmitting;
 
   function handleReset() {
     setState("idle");
     setJob(EMPTY_JOB);
     setFiles([]);
     setBatch(null);
+    setSubmitError(null);
+  }
+
+  async function handleSubmit() {
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const batchId = generateBatchId();
+      const response = await submitBatch(batchId, job, files);
+      setBatch({
+        batchId: response.batchId,
+        totalFiles: response.totalFiles,
+        processedCount: 0,
+        candidates: [],
+      });
+      setState("processing");
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -40,6 +67,21 @@ export default function Home() {
         <section aria-label="Job details and resume upload" className="space-y-6">
           <JobDescriptionForm value={job} onChange={setJob} />
           <ResumeDropzone files={files} onChange={setFiles} />
+
+          {submitError && (
+            <p role="alert" className="text-sm text-red-600">
+              {submitError}
+            </p>
+          )}
+
+          <button
+            type="button"
+            disabled={!canSubmit}
+            onClick={handleSubmit}
+            className="w-full rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300"
+          >
+            {isSubmitting ? "Submitting..." : "Start screening"}
+          </button>
         </section>
       )}
 
