@@ -44,6 +44,23 @@ Skip this section entirely if you haven't set up [section 10 of SETUP_GUIDE.md](
 - [ ] Run a second screening later and re-select the same inbox resume — it's still selectable (list doesn't remove items after use) and produces a fresh, independent result row
 - [ ] With `NEXT_PUBLIC_N8N_INBOX_WEBHOOK_URL` unset (or the Inbox List workflow inactive), reload the frontend — no "From inbox" panel, no console errors, drag-and-drop upload still works normally
 
+## Candidate email composer (optional feature)
+
+Skip this section entirely if you haven't set up [section 11 of SETUP_GUIDE.md](SETUP_GUIDE.md#11-optional-candidate-email-composer).
+
+- [ ] Open a candidate's detail view from the results table — an "Email Candidate" button appears next to "Back to results"
+- [ ] Click it — the composer opens with **To** pre-filled from the candidate's extracted email, **Subject** and **Message** empty, and an AI assistant chat panel on the right
+- [ ] Type your own subject and message by hand, without touching the AI panel — the **Send** button enables once all three fields are non-empty
+- [ ] Click a quick-action preset (e.g. "Interview invite") without typing anything into chat — a user message bubble appears, then an assistant reply, and the Subject/Message fields update with a real draft grounded in that candidate's actual score/strengths/gaps
+- [ ] Type a custom follow-up instruction in the chat input (e.g. "make it shorter") and press Enter — the draft updates again and a new assistant message appears; scroll position stays pinned to the latest message
+- [ ] Manually edit the AI-drafted Subject or Message text directly in the fields — edits stick and are NOT overwritten unless you ask the assistant for another change
+- [ ] Confirm no email has been sent yet at this point — nothing should appear in the `EmailsSent` sheet tab or the candidate's actual inbox
+- [ ] Click **Send Email** — button shows "Sending...", then a green "Email sent to ..." confirmation appears
+- [ ] Check the real inbox at the "To" address — the email arrived with the exact subject/body shown in the composer
+- [ ] Open the Google Sheet `EmailsSent` tab — a new row appears with the correct `batchId`, `fileName`, `candidateName`, `to`, `subject`, and `sentAt`
+- [ ] Try sending with an invalid "To" address (e.g. delete the `@`) — Send stays disabled or the request is rejected with a clear error, no email goes out
+- [ ] With `NEXT_PUBLIC_N8N_EMAIL_ASSISTANT_WEBHOOK_URL` or `NEXT_PUBLIC_N8N_SEND_EMAIL_WEBHOOK_URL` unset, reload the frontend — no "Email Candidate" button appears anywhere, no console errors
+
 ## Cross-browser / responsive
 
 - [ ] Test in Chrome and at least one other browser (Firefox/Safari/Edge)
