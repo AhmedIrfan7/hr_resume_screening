@@ -81,6 +81,68 @@
       }
     },
     {
+      "id": "a6000001-0000-0000-0000-000000000008",
+      "name": "Prepare Sent Row",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, -60],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const validated = $('Validate Payload').first().json;\n\nreturn [{\n  json: {\n    batchId: validated.batchId,\n    fileName: validated.fileName,\n    candidateName: validated.candidateName,\n    to: validated.to,\n    subject: validated.subject,\n    sentAt: new Date().toISOString()\n  }\n}];"
+      }
+    },
+    {
+      "id": "a6000001-0000-0000-0000-000000000009",
+      "name": "Log Email to Sheet",
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.5,
+      "position": [1100, -60],
+      "onError": "continueRegularOutput",
+      "parameters": {
+        "operation": "append",
+        "documentId": { "__rl": true, "value": "REPLACE_WITH_YOUR_GOOGLE_SHEET_ID", "mode": "id" },
+        "sheetName": { "__rl": true, "value": "EmailsSent", "mode": "name" },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "batchId": "={{ $json.batchId }}",
+            "fileName": "={{ $json.fileName }}",
+            "candidateName": "={{ $json.candidateName }}",
+            "to": "={{ $json.to }}",
+            "subject": "={{ $json.subject }}",
+            "sentAt": "={{ $json.sentAt }}"
+          },
+          "schema": [
+            { "id": "batchId", "type": "string", "display": true, "required": false, "displayName": "batchId", "defaultMatch": false, "canBeUsedToMatch": true },
+            { "id": "fileName", "type": "string", "display": true, "required": false, "displayName": "fileName", "defaultMatch": false, "canBeUsedToMatch": true },
+            { "id": "candidateName", "type": "string", "display": true, "required": false, "displayName": "candidateName", "defaultMatch": false, "canBeUsedToMatch": true },
+            { "id": "to", "type": "string", "display": true, "required": false, "displayName": "to", "defaultMatch": false, "canBeUsedToMatch": true },
+            { "id": "subject", "type": "string", "display": true, "required": false, "displayName": "subject", "defaultMatch": false, "canBeUsedToMatch": true },
+            { "id": "sentAt", "type": "string", "display": true, "required": false, "displayName": "sentAt", "defaultMatch": false, "canBeUsedToMatch": true }
+          ],
+          "matchingColumns": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": { "cellFormat": "RAW" }
+      },
+      "credentials": {
+        "googleSheetsOAuth2Api": { "id": "REPLACE_WITH_YOUR_GOOGLE_CRED_ID", "name": "Google Sheets account" }
+      }
+    },
+    {
+      "id": "a6000001-0000-0000-0000-000000000010",
+      "name": "Respond Success",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [1320, -60],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { success: true, sentAt: $json.sentAt } }}",
+        "options": { "responseCode": 200 }
+      }
+    },
+    {
       "id": "a6000001-0000-0000-0000-000000000006",
       "name": "Prepare Send Error",
       "type": "n8n-nodes-base.code",
@@ -110,7 +172,7 @@
       "typeVersion": 1,
       "position": [-20, -280],
       "parameters": {
-        "content": "## RESUMEIQ — SEND EMAIL WORKFLOW\n\nActually sends the email HR composed (with or without AI help) to a candidate. This is the ONLY workflow in ResumeIQ that sends real email — the Email Assistant workflow only ever drafts text, never sends. The frontend calls this workflow exclusively from the Send button, never automatically.\n\n**STATUS: send + error handling only — sheet logging + success response added next.**\n\n**IMPORTANT:** the Gmail credential used for reading inbox resumes may not have Gmail's *send* permission scope. If sending fails with a permissions/scope error, reconnect the Gmail credential and make sure you approve the full requested scope during the Google consent screen.",
+        "content": "## RESUMEIQ — SEND EMAIL WORKFLOW\n\nActually sends the email HR composed (with or without AI help) to a candidate, then logs it to the `EmailsSent` sheet tab for an audit trail. This is the ONLY workflow in ResumeIQ that sends real email — the Email Assistant workflow only ever drafts text, never sends. The frontend calls this workflow exclusively from the Send button, never automatically.\n\n**SETUP CHECKLIST**\n1. Set up (or reuse) a Gmail OAuth2 credential, replace `REPLACE_WITH_YOUR_GMAIL_CRED_ID`\n2. Replace `REPLACE_WITH_YOUR_GOOGLE_SHEET_ID` and the Google Sheets credential placeholder\n3. Make sure the `EmailsSent` tab exists with the right headers (see docs/SETUP_GUIDE.md)\n4. Activate, copy the webhook's production URL into `NEXT_PUBLIC_N8N_SEND_EMAIL_WEBHOOK_URL`\n\n**IMPORTANT:** the Gmail credential used for reading inbox resumes may not have Gmail's *send* permission scope. If sending fails with a permissions/scope error, reconnect the Gmail credential and make sure you approve the full requested scope during the Google consent screen.",
         "height": 260,
         "width": 500,
         "color": 4
@@ -136,8 +198,18 @@
     },
     "Send Gmail": {
       "main": [
-        [],
+        [{ "node": "Prepare Sent Row", "type": "main", "index": 0 }],
         [{ "node": "Prepare Send Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Prepare Sent Row": {
+      "main": [
+        [{ "node": "Log Email to Sheet", "type": "main", "index": 0 }]
+      ]
+    },
+    "Log Email to Sheet": {
+      "main": [
+        [{ "node": "Respond Success", "type": "main", "index": 0 }]
       ]
     },
     "Prepare Send Error": {
