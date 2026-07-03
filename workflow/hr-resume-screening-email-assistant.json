@@ -1,0 +1,124 @@
+{
+  "name": "HR Resume Screening — Email Assistant",
+  "nodes": [
+    {
+      "id": "f5000001-0000-0000-0000-000000000001",
+      "name": "Email Assistant Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "webhookId": "hr-screening-email-assistant",
+      "position": [0, 0],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hr-screening/email-assistant",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "f5000001-0000-0000-0000-000000000002",
+      "name": "Validate Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first();\nconst body = (item.json && item.json.body) || item.json || {};\n\nconst candidateName = (body.candidateName || '').toString().trim();\nconst candidateEmail = (body.candidateEmail || '').toString().trim();\nconst jobTitle = (body.jobTitle || '').toString().trim();\nconst jobDescription = (body.jobDescription || '').toString().trim();\nconst score = body.score;\nconst classification = (body.classification || '').toString().trim();\nconst summary = (body.summary || '').toString().trim();\nconst strengths = (body.strengths || '').toString().trim();\nconst gaps = (body.gaps || '').toString().trim();\nconst recommendation = (body.recommendation || '').toString().trim();\nconst currentSubject = (body.currentSubject || '').toString();\nconst currentBody = (body.currentBody || '').toString();\nconst userMessage = (body.userMessage || '').toString().trim();\n\nlet chatHistory = [];\ntry {\n  const parsed = JSON.parse(body.chatHistory || '[]');\n  if (Array.isArray(parsed)) chatHistory = parsed;\n} catch (e) {\n  chatHistory = [];\n}\n\nconst errors = [];\nif (!candidateEmail) errors.push('Missing candidateEmail');\nif (!userMessage) errors.push('Missing userMessage');\n\nreturn [{\n  json: {\n    isValid: errors.length === 0,\n    validationError: errors.join('; '),\n    candidateName,\n    candidateEmail,\n    jobTitle,\n    jobDescription,\n    score,\n    classification,\n    summary,\n    strengths,\n    gaps,\n    recommendation,\n    currentSubject,\n    currentBody,\n    userMessage,\n    chatHistory\n  }\n}];"
+      }
+    },
+    {
+      "id": "f5000001-0000-0000-0000-000000000003",
+      "name": "Is Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-valid",
+              "leftValue": "={{ $json.isValid }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "f5000001-0000-0000-0000-000000000004",
+      "name": "Respond Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [660, 200],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: $json.validationError } }}",
+        "options": { "responseCode": 400 }
+      }
+    },
+    {
+      "id": "f5000001-0000-0000-0000-000000000005",
+      "name": "Prepare Email Prompt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [660, -60],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first().json;\n\nconst historyText = (item.chatHistory || [])\n  .map((m) => `${m.role === 'user' ? 'HR' : 'Assistant'}: ${(m.text || '').toString()}`)\n  .join('\\n');\n\nconst prompt = `CANDIDATE REPORT\nName: ${item.candidateName || 'Unknown'}\nEmail: ${item.candidateEmail}\nOverall Score: ${item.score != null ? item.score : 'N/A'}/100\nFit: ${item.classification || 'Not specified'}\nSummary: ${item.summary || 'Not specified'}\nStrengths: ${item.strengths || 'Not specified'}\nGaps: ${item.gaps || 'Not specified'}\nRecommendation: ${item.recommendation || 'Not specified'}\n\nJOB CONTEXT\nTitle: ${item.jobTitle || 'Not specified'}\nDescription: ${item.jobDescription || 'Not specified'}\n\nCURRENT DRAFT\nSubject: ${item.currentSubject || '(empty)'}\nBody: ${item.currentBody || '(empty)'}\n\nCONVERSATION SO FAR\n${historyText || '(none yet)'}\n\nLATEST HR INSTRUCTION\n${item.userMessage}`;\n\nreturn [{\n  json: {\n    candidateEmail: item.candidateEmail,\n    prompt\n  }\n}];"
+      }
+    },
+    {
+      "id": "f5000001-0000-0000-0000-000000000099",
+      "name": "Sticky Note - Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-20, -260],
+      "parameters": {
+        "content": "## RESUMEIQ — EMAIL ASSISTANT WORKFLOW\n\nHelps HR draft or edit a candidate email by chatting with it — the assistant sees the candidate's full screening report plus the job context, so it can write something grounded in real evidence instead of generic filler. This workflow only ever returns a draft; it never sends anything. Sending is a completely separate workflow (`hr-resume-screening-send-email.json`) that only fires when HR clicks Send in the frontend.\n\n**STATUS: draft + validation only — OpenAI drafting node added next.**",
+        "height": 220,
+        "width": 480,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Email Assistant Webhook": {
+      "main": [
+        [{ "node": "Validate Payload", "type": "main", "index": 0 }]
+      ]
+    },
+    "Validate Payload": {
+      "main": [
+        [{ "node": "Is Valid?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Is Valid?": {
+      "main": [
+        [{ "node": "Prepare Email Prompt", "type": "main", "index": 0 }],
+        [{ "node": "Respond Error", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "versionId": "hr-resume-screening-email-assistant-v1",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "resumeiq-hr-resume-screening"
+  },
+  "tags": [
+    {
+      "name": "resumeiq",
+      "createdAt": "2026-07-02T00:00:00.000Z",
+      "updatedAt": "2026-07-02T00:00:00.000Z"
+    }
+  ]
+}
