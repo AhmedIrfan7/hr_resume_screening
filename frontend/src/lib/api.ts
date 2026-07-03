@@ -1,8 +1,12 @@
 import type {
+  DraftEmailRequest,
+  DraftEmailResponse,
   InboxListResponse,
   InboxResume,
   JobDetails,
   ResultsResponse,
+  SendEmailRequest,
+  SendEmailResponse,
   SubmitErrorResponse,
   SubmitResponse,
 } from "./types";
@@ -34,6 +38,20 @@ function inboxWebhookUrl(): string {
   return requireEnv(
     "NEXT_PUBLIC_N8N_INBOX_WEBHOOK_URL",
     process.env.NEXT_PUBLIC_N8N_INBOX_WEBHOOK_URL
+  );
+}
+
+function emailAssistantWebhookUrl(): string {
+  return requireEnv(
+    "NEXT_PUBLIC_N8N_EMAIL_ASSISTANT_WEBHOOK_URL",
+    process.env.NEXT_PUBLIC_N8N_EMAIL_ASSISTANT_WEBHOOK_URL
+  );
+}
+
+function sendEmailWebhookUrl(): string {
+  return requireEnv(
+    "NEXT_PUBLIC_N8N_SEND_EMAIL_WEBHOOK_URL",
+    process.env.NEXT_PUBLIC_N8N_SEND_EMAIL_WEBHOOK_URL
   );
 }
 
@@ -70,6 +88,48 @@ export async function fetchInboxResumes(): Promise<InboxResume[]> {
   }
 
   return data.resumes;
+}
+
+export function isEmailFeatureEnabled(): boolean {
+  return Boolean(
+    process.env.NEXT_PUBLIC_N8N_EMAIL_ASSISTANT_WEBHOOK_URL &&
+      process.env.NEXT_PUBLIC_N8N_SEND_EMAIL_WEBHOOK_URL
+  );
+}
+
+export async function draftEmail(request: DraftEmailRequest): Promise<DraftEmailResponse> {
+  const response = await fetch(emailAssistantWebhookUrl(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ...request,
+      chatHistory: JSON.stringify(request.chatHistory),
+    }),
+  });
+
+  const data = await parseJsonResponse<DraftEmailResponse | SubmitErrorResponse>(response);
+
+  if (!response.ok) {
+    throw new Error((data as SubmitErrorResponse).error || "Failed to draft email.");
+  }
+
+  return data as DraftEmailResponse;
+}
+
+export async function sendCandidateEmail(request: SendEmailRequest): Promise<SendEmailResponse> {
+  const response = await fetch(sendEmailWebhookUrl(), {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(request),
+  });
+
+  const data = await parseJsonResponse<SendEmailResponse | SubmitErrorResponse>(response);
+
+  if (!response.ok) {
+    throw new Error((data as SubmitErrorResponse).error || "Failed to send email.");
+  }
+
+  return data as SendEmailResponse;
 }
 
 export async function submitBatch(

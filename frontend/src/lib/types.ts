@@ -61,3 +61,45 @@ export interface InboxResume {
 export interface InboxListResponse {
   resumes: InboxResume[];
 }
+
+export interface ChatMessage {
+  role: "user" | "assistant";
+  text: string;
+}
+
+export interface DraftEmailRequest {
+  candidateName: string;
+  candidateEmail: string;
+  jobTitle: string;
+  jobDescription: string;
+  score: number;
+  classification: string;
+  summary: string;
+  strengths: string;
+  gaps: string;
+  recommendation: string;
+  currentSubject: string;
+  currentBody: string;
+  userMessage: string;
+  chatHistory: ChatMessage[];
+}
+
+export interface DraftEmailResponse {
+  subject: string;
+  body: string;
+  assistantReply: string;
+}
+
+export interface SendEmailRequest {
+  to: string;
+  subject: string;
+  body: string;
+  candidateName: string;
+  batchId: string;
+  fileName: string;
+}
+
+export interface SendEmailResponse {
+  success: boolean;
+  sentAt: string;
+}
