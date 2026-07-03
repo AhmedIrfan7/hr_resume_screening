@@ -1,0 +1,167 @@
+{
+  "name": "HR Resume Screening — Send Email",
+  "nodes": [
+    {
+      "id": "a6000001-0000-0000-0000-000000000001",
+      "name": "Send Email Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "webhookId": "hr-screening-send-email",
+      "position": [0, 0],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hr-screening/send-email",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "a6000001-0000-0000-0000-000000000002",
+      "name": "Validate Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first();\nconst payload = (item.json && item.json.body) || item.json || {};\n\nconst to = (payload.to || '').toString().trim();\nconst subject = (payload.subject || '').toString().trim();\nconst emailBody = (payload.body || '').toString();\nconst candidateName = (payload.candidateName || '').toString().trim();\nconst batchId = (payload.batchId || '').toString().trim();\nconst fileName = (payload.fileName || '').toString().trim();\n\nconst emailPattern = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;\n\nconst errors = [];\nif (!to) errors.push('Missing recipient email');\nelse if (!emailPattern.test(to)) errors.push('Recipient email looks invalid');\nif (!subject) errors.push('Missing subject');\nif (!emailBody.trim()) errors.push('Missing email body');\n\nreturn [{\n  json: {\n    isValid: errors.length === 0,\n    validationError: errors.join('; '),\n    to,\n    subject,\n    body: emailBody,\n    candidateName,\n    batchId,\n    fileName\n  }\n}];"
+      }
+    },
+    {
+      "id": "a6000001-0000-0000-0000-000000000003",
+      "name": "Is Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 0],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cond-valid",
+              "leftValue": "={{ $json.isValid }}",
+              "rightValue": "",
+              "operator": { "type": "boolean", "operation": "true", "singleValue": true }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "a6000001-0000-0000-0000-000000000004",
+      "name": "Respond Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [660, 200],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: $json.validationError } }}",
+        "options": { "responseCode": 400 }
+      }
+    },
+    {
+      "id": "a6000001-0000-0000-0000-000000000005",
+      "name": "Send Gmail",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [660, -60],
+      "onError": "continueErrorOutput",
+      "parameters": {
+        "resource": "message",
+        "operation": "send",
+        "sendTo": "={{ $json.to }}",
+        "subject": "={{ $json.subject }}",
+        "message": "={{ $json.body }}",
+        "emailType": "text",
+        "options": {}
+      },
+      "credentials": {
+        "gmailOAuth2": { "id": "REPLACE_WITH_YOUR_GMAIL_CRED_ID", "name": "Gmail account" }
+      }
+    },
+    {
+      "id": "a6000001-0000-0000-0000-000000000006",
+      "name": "Prepare Send Error",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [880, 220],
+      "parameters": {
+        "mode": "runOnceForAllItems",
+        "jsCode": "const item = $input.first();\nconst validated = $('Validate Payload').first().json;\nconst message = (item.json && item.json.error && item.json.error.message) || 'Failed to send email via Gmail.';\n\nreturn [{\n  json: {\n    to: validated.to,\n    error: message\n  }\n}];"
+      }
+    },
+    {
+      "id": "a6000001-0000-0000-0000-000000000007",
+      "name": "Respond Send Error",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [1100, 220],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { error: $json.error } }}",
+        "options": { "responseCode": 502 }
+      }
+    },
+    {
+      "id": "a6000001-0000-0000-0000-000000000099",
+      "name": "Sticky Note - Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [-20, -280],
+      "parameters": {
+        "content": "## RESUMEIQ — SEND EMAIL WORKFLOW\n\nActually sends the email HR composed (with or without AI help) to a candidate. This is the ONLY workflow in ResumeIQ that sends real email — the Email Assistant workflow only ever drafts text, never sends. The frontend calls this workflow exclusively from the Send button, never automatically.\n\n**STATUS: send + error handling only — sheet logging + success response added next.**\n\n**IMPORTANT:** the Gmail credential used for reading inbox resumes may not have Gmail's *send* permission scope. If sending fails with a permissions/scope error, reconnect the Gmail credential and make sure you approve the full requested scope during the Google consent screen.",
+        "height": 260,
+        "width": 500,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Send Email Webhook": {
+      "main": [
+        [{ "node": "Validate Payload", "type": "main", "index": 0 }]
+      ]
+    },
+    "Validate Payload": {
+      "main": [
+        [{ "node": "Is Valid?", "type": "main", "index": 0 }]
+      ]
+    },
+    "Is Valid?": {
+      "main": [
+        [{ "node": "Send Gmail", "type": "main", "index": 0 }],
+        [{ "node": "Respond Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send Gmail": {
+      "main": [
+        [],
+        [{ "node": "Prepare Send Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Prepare Send Error": {
+      "main": [
+        [{ "node": "Respond Send Error", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "pinData": {},
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "versionId": "hr-resume-screening-send-email-v1",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "resumeiq-hr-resume-screening"
+  },
+  "tags": [
+    {
+      "name": "resumeiq",
+      "createdAt": "2026-07-02T00:00:00.000Z",
+      "updatedAt": "2026-07-02T00:00:00.000Z"
+    }
+  ]
+}
