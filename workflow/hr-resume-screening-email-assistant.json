@@ -72,14 +72,55 @@
       }
     },
     {
+      "id": "f5000001-0000-0000-0000-000000000006",
+      "name": "OpenAI Chat Model",
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [880, -220],
+      "parameters": {
+        "model": { "__rl": true, "value": "gpt-4o-mini", "mode": "list", "cachedResultName": "gpt-4o-mini" },
+        "options": { "temperature": 0.4 }
+      },
+      "credentials": {
+        "openAiApi": { "id": "REPLACE_WITH_YOUR_OPENAI_CRED_ID", "name": "OpenAI account" }
+      }
+    },
+    {
+      "id": "f5000001-0000-0000-0000-000000000007",
+      "name": "Draft Email",
+      "type": "@n8n/n8n-nodes-langchain.informationExtractor",
+      "typeVersion": 1.1,
+      "position": [880, -60],
+      "parameters": {
+        "text": "={{ $json.prompt }}",
+        "schemaType": "manual",
+        "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"subject\": { \"type\": \"string\", \"description\": \"Email subject line\" },\n    \"body\": { \"type\": \"string\", \"description\": \"Full email body text, professional tone, ready to send as-is\" },\n    \"assistantReply\": { \"type\": \"string\", \"description\": \"1-2 sentence note to show HR in the chat, describing what was written or changed\" }\n  },\n  \"required\": [\"subject\", \"body\", \"assistantReply\"]\n}",
+        "options": {
+          "systemPromptTemplate": "You are an HR communications assistant helping write a personalized email to a specific job candidate. You're given the candidate's screening report, the job context, the current draft (if any), the conversation so far, and the HR's latest instruction. Follow the latest instruction precisely — whether it asks for a new email (e.g. interview invite, rejection, request for more info) or a revision to the current draft (e.g. make it more formal, shorten it, fix something specific). If revising, preserve the existing subject/body except for what the instruction asks to change. Ground the email in facts from the candidate report and job context — never invent details that aren't there. Keep the tone professional and appropriate for direct candidate communication. Always return a complete, ready-to-send subject and body, even for a small tweak request."
+        }
+      }
+    },
+    {
+      "id": "f5000001-0000-0000-0000-000000000008",
+      "name": "Respond Draft",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.4,
+      "position": [1100, -60],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { subject: ($json.output || $json).subject, body: ($json.output || $json).body, assistantReply: ($json.output || $json).assistantReply } }}",
+        "options": { "responseCode": 200 }
+      }
+    },
+    {
       "id": "f5000001-0000-0000-0000-000000000099",
       "name": "Sticky Note - Overview",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [-20, -260],
       "parameters": {
-        "content": "## RESUMEIQ — EMAIL ASSISTANT WORKFLOW\n\nHelps HR draft or edit a candidate email by chatting with it — the assistant sees the candidate's full screening report plus the job context, so it can write something grounded in real evidence instead of generic filler. This workflow only ever returns a draft; it never sends anything. Sending is a completely separate workflow (`hr-resume-screening-send-email.json`) that only fires when HR clicks Send in the frontend.\n\n**STATUS: draft + validation only — OpenAI drafting node added next.**",
-        "height": 220,
+        "content": "## RESUMEIQ — EMAIL ASSISTANT WORKFLOW\n\nHelps HR draft or edit a candidate email by chatting with it — the assistant sees the candidate's full screening report plus the job context, so it can write something grounded in real evidence instead of generic filler. This workflow only ever returns a draft; it never sends anything. Sending is a completely separate workflow (`hr-resume-screening-send-email.json`) that only fires when HR clicks Send in the frontend.\n\n**SETUP CHECKLIST**\n1. Set up an OpenAI API credential, replace `REPLACE_WITH_YOUR_OPENAI_CRED_ID`\n2. Activate the workflow, copy the webhook's production URL into `NEXT_PUBLIC_N8N_EMAIL_ASSISTANT_WEBHOOK_URL`",
+        "height": 240,
         "width": 480,
         "color": 4
       }
@@ -100,6 +141,21 @@
       "main": [
         [{ "node": "Prepare Email Prompt", "type": "main", "index": 0 }],
         [{ "node": "Respond Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Prepare Email Prompt": {
+      "main": [
+        [{ "node": "Draft Email", "type": "main", "index": 0 }]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [{ "node": "Draft Email", "type": "ai_languageModel", "index": 0 }]
+      ]
+    },
+    "Draft Email": {
+      "main": [
+        [{ "node": "Respond Draft", "type": "main", "index": 0 }]
       ]
     }
   },
