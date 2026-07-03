@@ -111,6 +111,9 @@ See [`vercel.json`](../frontend/vercel.json) for build settings pinned in the re
 | Google Sheets node errors in n8n | Re-check the Sheet ID and that the tab names are exactly `Candidates` and `Errors` (case-sensitive) |
 | "From inbox" panel never shows up | `NEXT_PUBLIC_N8N_INBOX_WEBHOOK_URL` isn't set — the panel is hidden on purpose until you set it (see [section 10](#10-optional-gmail-inbox-resume-sourcing)) |
 | Inbox list is empty even though emails arrived | The Inbox Ingest workflow polls every minute — give it a minute, then check its execution log; also confirm it's **Active**, not just saved |
+| "Email Candidate" button never shows up | Both `NEXT_PUBLIC_N8N_EMAIL_ASSISTANT_WEBHOOK_URL` and `NEXT_PUBLIC_N8N_SEND_EMAIL_WEBHOOK_URL` must be set — the button is hidden if either is missing (see [section 11](#11-optional-candidate-email-composer)) |
+| Sending an email fails with a permission/scope error | The Gmail credential was likely authorized without send permission (e.g. only used for reading inbox resumes so far) — reconnect it and approve the full scope Google's consent screen asks for |
+| `columns.schema is required when columns.mappingMode is defineBelow` in n8n | A Google Sheets append node is missing its schema — this is already fixed in every workflow JSON in this repo; if you hand-edited a node, either re-import fresh or switch that node's mapping mode to **Map Automatically** |
 
 ## 10. Optional: Gmail inbox resume sourcing
 
@@ -137,3 +140,28 @@ Lets HR select resumes that arrived as Gmail attachments, alongside (not instead
 9. Reload the frontend — a "From inbox" panel should now appear next to the job description form once the Inbox Ingest workflow has picked up at least one PDF (it polls every minute; new attachments are skipped if they're not PDFs, silently).
 
 The Gmail trigger deliberately has no search query — it catches every new email, and the `Filter PDF Attachments` code node keeps only PDF attachments. This is intentional: the Gmail API's `filename:` search operator was found to silently drop matching emails in testing, so filtering happens in code instead. If you want to scope it to a specific label or sender, use the **Label Names** or **Sender** fields in the Gmail Trigger node's Filters (not the `q` search field).
+
+## 11. Optional: Candidate email composer
+
+Lets HR compose and send an email to a candidate straight from that candidate's detail view — either typed by hand, or drafted/edited by chatting with an AI assistant that can see the candidate's full screening report and the job description. Nothing is ever sent except by HR clicking the Send button in the frontend. Skip this whole section if you don't need it.
+
+1. Add the `EmailsSent` tab to your Google Sheet if you haven't already (step 2.5 above).
+2. Make sure you have a **Gmail OAuth2 API** credential in n8n (the same one from [section 10](#10-optional-gmail-inbox-resume-sourcing) works, provided it has send permission — see the note below).
+3. Make sure you have an **OpenAI API** credential (the same one the submit workflow uses works fine).
+4. Import both workflows: [`workflow/hr-resume-screening-email-assistant.json`](../workflow/hr-resume-screening-email-assistant.json) and [`workflow/hr-resume-screening-send-email.json`](../workflow/hr-resume-screening-send-email.json).
+5. Replace placeholders:
+   - **Email Assistant workflow**: `REPLACE_WITH_YOUR_OPENAI_CRED_ID` on the `OpenAI Chat Model` node.
+   - **Send Email workflow**: `REPLACE_WITH_YOUR_GMAIL_CRED_ID` on `Send Gmail`, `REPLACE_WITH_YOUR_GOOGLE_SHEET_ID` and the Google Sheets credential on `Log Email to Sheet`.
+6. **Activate** both new workflows.
+7. Open each workflow's webhook node, copy its Production URL, and add both to `.env.local` (and Vercel, if deployed):
+
+   ```
+   NEXT_PUBLIC_N8N_EMAIL_ASSISTANT_WEBHOOK_URL=<email assistant webhook production URL>
+   NEXT_PUBLIC_N8N_SEND_EMAIL_WEBHOOK_URL=<send email webhook production URL>
+   ```
+
+8. Reload the frontend. Open any candidate's detail view (from the results table) — an **"Email Candidate"** button now appears next to "Back to results".
+
+**About the Gmail send permission:** Gmail OAuth scopes for *reading* mail and *sending* mail are separate. If you set up the Gmail credential purely for inbox resume reading, sending may fail with a permission error the first time you try. If that happens, reconnect the Gmail credential in n8n and make sure you accept the full set of permissions Google's consent screen requests — don't decline any of them.
+
+**Why two separate workflows:** the Email Assistant workflow only ever drafts or edits text and returns it to the frontend — it has no Gmail send node at all, so there's no way a chat request can cause an email to go out. Only the Send Email workflow can actually send, and the frontend only calls it from the explicit Send button.
