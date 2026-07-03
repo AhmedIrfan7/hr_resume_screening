@@ -30,7 +30,13 @@ Follow these steps in order — the workflows won't run correctly until the Goog
    id | fileName | senderEmail | senderName | subject | receivedAt | driveFileId
    ```
 
-5. Copy the Sheet ID from the URL — it's the long string between `/d/` and `/edit`:
+5. Add a fourth tab named **`EmailsSent`** with this header row (only needed if you're using the optional candidate email composer — see [section 11](#11-optional-candidate-email-composer)):
+
+   ```
+   batchId | fileName | candidateName | to | subject | sentAt
+   ```
+
+6. Copy the Sheet ID from the URL — it's the long string between `/d/` and `/edit`:
    `https://docs.google.com/spreadsheets/d/`**`THIS_PART_IS_THE_ID`**`/edit`
 
 ## 3. n8n Cloud setup & credentials
@@ -130,4 +136,4 @@ Lets HR select resumes that arrived as Gmail attachments, alongside (not instead
 
 9. Reload the frontend — a "From inbox" panel should now appear next to the job description form once the Inbox Ingest workflow has picked up at least one PDF (it polls every minute; new attachments are skipped if they're not PDFs, silently).
 
-By default, the Gmail trigger searches `has:attachment filename:pdf` across the whole inbox. To scope it to a specific label or sender, edit the `q` value in the **Gmail Trigger** node's Filters — it accepts the same search syntax as the Gmail search box.
+The Gmail trigger deliberately has no search query — it catches every new email, and the `Filter PDF Attachments` code node keeps only PDF attachments. This is intentional: the Gmail API's `filename:` search operator was found to silently drop matching emails in testing, so filtering happens in code instead. If you want to scope it to a specific label or sender, use the **Label Names** or **Sender** fields in the Gmail Trigger node's Filters (not the `q` search field).
