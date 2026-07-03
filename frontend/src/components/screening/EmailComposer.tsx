@@ -162,22 +162,24 @@ export function EmailComposer({ candidate, job, batchId, onClose }: EmailCompose
           </button>
         </div>
 
+        {sendStatus === "success" && (
+          <div className="flex animate-fade-in items-start gap-2 border-b border-emerald-100 bg-emerald-50 px-6 py-3 text-sm text-emerald-700 sm:px-7">
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+            <span>
+              <strong>Sent.</strong> Email delivered to {to}.
+            </span>
+          </div>
+        )}
+
+        {sendStatus === "error" && sendError && (
+          <div className="flex animate-fade-in items-start gap-2 border-b border-red-100 bg-red-50 px-6 py-3 text-sm text-red-700 sm:px-7">
+            <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
+            {sendError}
+          </div>
+        )}
+
         <div className="grid flex-1 gap-0 overflow-hidden sm:grid-cols-2">
           <div className="space-y-4 overflow-y-auto border-b border-slate-100 p-6 sm:border-b-0 sm:border-r sm:p-7">
-            {sendStatus === "success" && (
-              <p className="flex animate-fade-in items-start gap-2 rounded-lg bg-emerald-50 px-3.5 py-2.5 text-sm text-emerald-700">
-                <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
-                Email sent to {to}.
-              </p>
-            )}
-
-            {sendStatus === "error" && sendError && (
-              <p className="flex animate-fade-in items-start gap-2 rounded-lg bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={2} />
-                {sendError}
-              </p>
-            )}
-
             <div>
               <label htmlFor="composer-to" className="mb-1.5 block text-sm font-medium text-slate-700">
                 To
