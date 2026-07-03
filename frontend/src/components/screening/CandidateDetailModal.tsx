@@ -1,4 +1,14 @@
-import { Award, ChevronLeft, GraduationCap, Mail, Phone, ShieldCheck, Sparkles, X } from "lucide-react";
+import {
+  Award,
+  ChevronLeft,
+  GraduationCap,
+  Mail,
+  MailPlus,
+  Phone,
+  ShieldCheck,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { classificationClass, classificationIcon } from "@/lib/candidateStyles";
 import type { Candidate } from "@/lib/types";
@@ -6,6 +16,7 @@ import type { Candidate } from "@/lib/types";
 interface CandidateDetailModalProps {
   candidate: Candidate;
   onClose: () => void;
+  onEmailCandidate?: () => void;
 }
 
 interface ScoreRowProps {
@@ -54,7 +65,7 @@ function initials(name: string): string {
   return (parts[0][0] + (parts[1]?.[0] || "")).toUpperCase();
 }
 
-export function CandidateDetailModal({ candidate, onClose }: CandidateDetailModalProps) {
+export function CandidateDetailModal({ candidate, onClose, onEmailCandidate }: CandidateDetailModalProps) {
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const Icon = classificationIcon(candidate.classification);
   const displayName = candidate.candidateName || candidate.fileName;
@@ -201,15 +212,25 @@ export function CandidateDetailModal({ candidate, onClose }: CandidateDetailModa
         </dl>
         </div>
 
-        <div className="border-t border-slate-100 bg-slate-50/60 p-4 sm:px-7">
+        <div className="flex items-center gap-3 border-t border-slate-100 bg-slate-50/60 p-4 sm:px-7">
           <button
             type="button"
             onClick={onClose}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm ring-1 ring-inset ring-slate-200 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
           >
             <ChevronLeft className="h-4 w-4" strokeWidth={2.25} />
             Back to results
           </button>
+          {onEmailCandidate && (
+            <button
+              type="button"
+              onClick={onEmailCandidate}
+              className="flex flex-1 items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-500 px-4 py-2.5 text-sm font-semibold text-white shadow-card transition-all duration-200 hover:shadow-card-hover hover:brightness-105 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500 focus-visible:ring-offset-2"
+            >
+              <MailPlus className="h-4 w-4" strokeWidth={2.25} />
+              Email Candidate
+            </button>
+          )}
         </div>
       </div>
     </div>

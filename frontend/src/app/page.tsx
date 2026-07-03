@@ -11,6 +11,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import { EmailComposer } from "@/components/screening/EmailComposer";
 import { Hero } from "@/components/screening/Hero";
 import { InboxResumeList } from "@/components/screening/InboxResumeList";
 import { JobDescriptionForm } from "@/components/screening/JobDescriptionForm";
@@ -20,7 +21,7 @@ import { ProcessingView } from "@/components/screening/ProcessingView";
 import { RankedCandidateTable } from "@/components/screening/RankedCandidateTable";
 import { ResumeDropzone } from "@/components/screening/ResumeDropzone";
 import { usePollResults } from "@/hooks/usePollResults";
-import { generateBatchId, isInboxFeatureEnabled, submitBatch } from "@/lib/api";
+import { generateBatchId, isEmailFeatureEnabled, isInboxFeatureEnabled, submitBatch } from "@/lib/api";
 import { candidatesToCsv, downloadCsv } from "@/lib/csv";
 import type { Candidate, JobDetails } from "@/lib/types";
 
@@ -47,6 +48,7 @@ export default function Home() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [emailingCandidate, setEmailingCandidate] = useState<Candidate | null>(null);
   const [search, setSearch] = useState("");
   const [classificationFilter, setClassificationFilter] = useState("All");
 
@@ -84,6 +86,7 @@ export default function Home() {
     setBatch(null);
     setSubmitError(null);
     setSelectedCandidate(null);
+    setEmailingCandidate(null);
   }
 
   function handleExportCsv() {
@@ -109,6 +112,7 @@ export default function Home() {
   }
 
   const inboxEnabled = isInboxFeatureEnabled();
+  const emailEnabled = isEmailFeatureEnabled();
 
   return (
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-6 sm:py-10">
@@ -277,6 +281,23 @@ export default function Home() {
             <CandidateDetailModal
               candidate={selectedCandidate}
               onClose={() => setSelectedCandidate(null)}
+              onEmailCandidate={
+                emailEnabled
+                  ? () => {
+                      setEmailingCandidate(selectedCandidate);
+                      setSelectedCandidate(null);
+                    }
+                  : undefined
+              }
+            />
+          )}
+
+          {emailingCandidate && (
+            <EmailComposer
+              candidate={emailingCandidate}
+              job={job}
+              batchId={batch?.batchId ?? ""}
+              onClose={() => setEmailingCandidate(null)}
             />
           )}
         </section>
