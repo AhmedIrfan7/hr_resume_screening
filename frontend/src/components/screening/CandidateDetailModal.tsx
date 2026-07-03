@@ -12,6 +12,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { classificationClass, classificationIcon } from "@/lib/candidateStyles";
 import type { Candidate } from "@/lib/types";
+import { ModalPortal } from "./ModalPortal";
 
 interface CandidateDetailModalProps {
   candidate: Candidate;
@@ -81,6 +82,7 @@ export function CandidateDetailModal({ candidate, onClose, onEmailCandidate }: C
   }, [onClose]);
 
   return (
+    <ModalPortal>
     <div
       role="dialog"
       aria-modal="true"
@@ -234,5 +236,6 @@ export function CandidateDetailModal({ candidate, onClose, onEmailCandidate }: C
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }

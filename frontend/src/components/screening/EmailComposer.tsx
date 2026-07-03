@@ -14,6 +14,7 @@ import {
 import { useEffect, useRef, useState } from "react";
 import { draftEmail, sendCandidateEmail } from "@/lib/api";
 import type { Candidate, ChatMessage, JobDetails } from "@/lib/types";
+import { ModalPortal } from "./ModalPortal";
 
 interface EmailComposerProps {
   candidate: Candidate;
@@ -128,6 +129,7 @@ export function EmailComposer({ candidate, job, batchId, onClose }: EmailCompose
   }
 
   return (
+    <ModalPortal>
     <div
       role="dialog"
       aria-modal="true"
@@ -334,5 +336,6 @@ export function EmailComposer({ candidate, job, batchId, onClose }: EmailCompose
         </div>
       </div>
     </div>
+    </ModalPortal>
   );
 }
